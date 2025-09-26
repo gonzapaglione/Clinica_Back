@@ -1,33 +1,39 @@
 package com.clinica.clinica_coc.services;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
 @Service
-public class PacienteServicio {
+public class PacienteServicio implements IPacienteServicio {
 
     @Autowired
-    private PacienteRepositorio pacienteRepositorio;
+    private PacienteRepositorio PacienteRepositorio;
 
+    @Override
     public List<Paciente> listarPacientes() {
-        return pacienteRepositorio.findAll();
+        return PacienteRepositorio.findAll();
     }
 
+    @Override
+    public Paciente buscarPacientePorId(Long id) {
+        return PacienteRepositorio.findById(id).orElse(null);
+    }
+
+    @Override
     public Paciente guardarPaciente(Paciente paciente) {
-        return pacienteRepositorio.save(paciente);
+        if (paciente.getPersona() == null || paciente.getPersona().getId_persona() == null) {
+            throw new RuntimeException("Debe asignarse una persona existente al paciente");
+        }
+        return PacienteRepositorio.save(paciente);
     }
 
-    public void eliminarPaciente(Long id) {
-        pacienteRepositorio.deleteById(id);
+    @Override
+    public void eliminarPaciente(Paciente paciente) {
+        PacienteRepositorio.delete(paciente);
     }
 
-    public Paciente pacientePorId(Long id) {
-        return pacienteRepositorio.findById(id).orElse(null);
-
-    }
 }

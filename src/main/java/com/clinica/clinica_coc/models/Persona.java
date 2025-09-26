@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "personas")
+@Table(name = "persona")
 
 @Data // genera getters, setters, toString, equals y hashCode
 @NoArgsConstructor
@@ -24,7 +24,11 @@ public class Persona {
     private String nombre;
     private String apellido;
     private Long dni;
-    private String telefono;
-    private String domicilio;
 
+    private String email;
+    private String username;
+    private String password;
+
+    private String domicilio;
+    private String telefono;
 }
