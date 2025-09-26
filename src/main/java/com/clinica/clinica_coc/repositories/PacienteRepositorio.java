@@ -7,5 +7,4 @@ import com.clinica.clinica_coc.models.Paciente;
 
 @Repository
 public interface PacienteRepositorio extends JpaRepository<Paciente, Long> {
-
 }
