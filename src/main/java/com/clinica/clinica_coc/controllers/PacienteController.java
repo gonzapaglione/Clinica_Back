@@ -40,7 +40,7 @@ public class PacienteController {
     }
 
     @PostMapping()
-    public Paciente agregarPaciente(@RequestParam Long personaId,
+    public Paciente agregarPaciente(@RequestParam Long personaId, @RequestParam String cob_social,
             @RequestBody Paciente paciente) {
         logger.info("Paciente a agregar: " + paciente.toString());
 
@@ -50,6 +50,7 @@ public class PacienteController {
         }
 
         paciente.setPersona(persona);
+        paciente.setCob_social(cob_social);
 
         return pacienteServicio.guardarPaciente(paciente);
     }

@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,6 +24,7 @@ public class Paciente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id_paciente;
 
+    @JsonProperty("cob_social")
     private String cob_social;
 
     @OneToOne
