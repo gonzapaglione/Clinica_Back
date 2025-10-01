@@ -6,29 +6,36 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "paciente")
-
-@Data // genera getters, setters, toString, equals y hashCode
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Paciente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id_paciente;
 
-    @JsonProperty("cob_social")
-    private String cob_social;
-
+    // Relación con Persona (1:1)
     @OneToOne
     @JoinColumn(name = "id_persona", nullable = false)
     private Persona persona;
 
+    // Relación ManyToMany con cobertura social
+    @ManyToMany
+    @JoinTable(
+        name = "paciente_cobertura",
+        joinColumns = @JoinColumn(name = "id_paciente"),
+        inverseJoinColumns = @JoinColumn(name = "id_cob_social")
+    )
+    private List<CoberturaSocial> coberturas;
 }
