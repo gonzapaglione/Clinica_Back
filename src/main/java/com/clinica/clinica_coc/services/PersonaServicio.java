@@ -17,7 +17,7 @@ public class PersonaServicio implements IPersonaServicio {
     public List<Persona> listarPersonas() {
         return personaRepositorio.findAll();
     }
-
+    
     @Override
     public Persona buscarPersonaPorId(Long id) {
         return personaRepositorio.findById(id).orElse(null);
@@ -29,8 +29,9 @@ public class PersonaServicio implements IPersonaServicio {
     }
 
     @Override
-    public void eliminarPersona(Persona persona) {
-        personaRepositorio.delete(persona);
+    public void darBajaPersona(Persona persona) {
+        persona.setIsActive("Inactivo");
+        personaRepositorio.save(persona);
     }
 
 }

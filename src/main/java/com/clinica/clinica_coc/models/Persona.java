@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,4 +32,7 @@ public class Persona {
 
     private String domicilio;
     private String telefono;
+    
+    @Column(name = "isActive", nullable = false, columnDefinition = "ENUM('Activo','Inactivo') default 'Activo'")
+    private String isActive = "Activo";
 }

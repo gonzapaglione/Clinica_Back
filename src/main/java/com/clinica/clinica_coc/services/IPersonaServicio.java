@@ -13,7 +13,7 @@ public interface IPersonaServicio {
     // Crear y actualizar comparten el mismo metodo
     public Persona guardarPersona(Persona persona);
 
-    public void eliminarPersona(Persona persona);
+    public void darBajaPersona(Persona persona);
 
     // public Persona findByDni(Long DNI);
 }
