@@ -1,5 +1,8 @@
 package com.clinica.clinica_coc.controllers;
 
+import com.clinica.clinica_coc.DTO.BajaPacienteResponse;
+import com.clinica.clinica_coc.DTO.PacienteRequest;
+import com.clinica.clinica_coc.DTO.PacienteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,66 +46,102 @@ public class PacienteController {
 
     // GET: listar todos
     @GetMapping()
-    public ResponseEntity<List<Paciente>> listarPacientes() {
+    public ResponseEntity<List<PacienteResponse>> listarPacientes() {
         List<Paciente> pacientes = pacienteServicio.listarPacientes();
 
         if (pacientes.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
-        pacientes.forEach(persona -> logger.info("Paciente: " + persona.toString()));
-        return ResponseEntity.ok(pacientes);
+        // Convertimos cada Paciente a PacienteResponse
+        List<PacienteResponse> response = pacientes.stream().map(p
+                -> new PacienteResponse(
+                        p.getId_paciente(),
+                        p.getPersona().getNombre(),
+                        p.getPersona().getApellido(),
+                        p.getPersona().getDni(),
+                        p.getPersona().getEmail(),
+                        p.getPersona().getTelefono(),
+                        p.getPersona().getIsActive(),
+                        p.getCoberturas().stream()
+                                .map(c -> c.getNombre_cobertura())
+                                .toList()
+                )
+        ).toList();
+
+        return ResponseEntity.ok(response);
     }
 
     // GET: listar por id
     @GetMapping("/{id}")
-    public ResponseEntity<Paciente> listarPersonaPorId(@PathVariable Long id) {
-        Paciente paciente = pacienteServicio.buscarPacientePorId(id);
+    public ResponseEntity<PacienteResponse> listarPersonaPorId(@PathVariable Long id) {
+        Paciente p = pacienteServicio.buscarPacientePorId(id);
 
-        if (paciente == null) {
+        if (p == null) {
             return ResponseEntity.notFound().build(); // 404 si no existe
         }
 
-        return ResponseEntity.ok(paciente); // 200 OK con la persona
+        PacienteResponse response = new PacienteResponse(
+                p.getId_paciente(),
+                p.getPersona().getNombre(),
+                p.getPersona().getApellido(),
+                p.getPersona().getDni(),
+                p.getPersona().getEmail(),
+                p.getPersona().getTelefono(),
+                p.getPersona().getIsActive(),
+                p.getCoberturas().stream()
+                        .map(c -> c.getNombre_cobertura())
+                        .toList()
+        );
+
+        return ResponseEntity.ok(response); // 200 OK : con el DTO del paciente
     }
 
     // POST: agregar paciente
     @PostMapping()
-    public ResponseEntity<Paciente> agregarPaciente(
-            @RequestParam Long personaId,
-            @RequestParam List<Long> coberturasIds,
-            @RequestBody Paciente paciente) {
-
-        logger.info("Paciente a agregar: " + paciente.toString());
+    public ResponseEntity<PacienteResponse> agregarPaciente(
+            @RequestBody PacienteRequest request) {
 
         // Buscar persona
-        Persona persona = personaServicio.buscarPersonaPorId(personaId);
+        Persona persona = personaServicio.buscarPersonaPorId(request.getPersonaId());
         if (persona == null) {
             return ResponseEntity.badRequest().body(null); // persona no encontrada
         }
-        paciente.setPersona(persona);
 
         // Buscar coberturas
-        List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(coberturasIds);
+        List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(request.getCoberturasIds());
+
         if (coberturas.isEmpty()) {
             return ResponseEntity.badRequest().body(null); // ninguna cobertura encontrada
         }
+
+        Paciente paciente = new Paciente();
+        paciente.setPersona(persona);
         paciente.setCoberturas(coberturas);
 
         // Guardar paciente
         Paciente pacienteGuardado = pacienteServicio.guardarPaciente(paciente);
 
-        return ResponseEntity.ok(pacienteGuardado);
+        // Convertir a PacienteResponse (DTO)
+        PacienteResponse response = new PacienteResponse(
+                pacienteGuardado.getId_paciente(),
+                persona.getNombre(),
+                persona.getApellido(),
+                persona.getDni(),
+                persona.getEmail(),
+                persona.getTelefono(),
+                persona.getIsActive(),
+                coberturas.stream().map(c -> c.getNombre_cobertura()).toList()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
-    // PUT: editar paciente, las coberturas se pasan como Request Param en la URL o en Postman en la pestaña Params
-    //Ejemplo: coberturasIds=1&coberturasIds=2
-
+    // PUT: editar paciente.
     @PutMapping("/{id}")
-    public ResponseEntity<Paciente> editarPaciente(
+    public ResponseEntity<PacienteResponse> editarPaciente(
             @PathVariable Long id,
-            @RequestParam List<Long> coberturasIds,
-            @RequestBody Paciente pacienteActualizado) {
+            @RequestBody PacienteRequest request) {
 
         // Buscar paciente existente
         Paciente paciente = pacienteServicio.buscarPacientePorId(id);
@@ -111,30 +150,30 @@ public class PacienteController {
         }
 
         // Actualizar coberturas
-        List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(coberturasIds);
+        List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(request.getCoberturasIds());
         paciente.setCoberturas(coberturas);
 
-        // Actualizar datos de persona si quieres permitirlo
-        Persona persona = paciente.getPersona();
-        persona.setNombre(pacienteActualizado.getPersona().getNombre());
-        persona.setApellido(pacienteActualizado.getPersona().getApellido());
-        persona.setDni(pacienteActualizado.getPersona().getDni());
-        persona.setEmail(pacienteActualizado.getPersona().getEmail());
-        persona.setUsername(pacienteActualizado.getPersona().getUsername());
-        persona.setPassword(pacienteActualizado.getPersona().getPassword());
-        persona.setDomicilio(pacienteActualizado.getPersona().getDomicilio());
-        persona.setTelefono(pacienteActualizado.getPersona().getTelefono());
-        personaServicio.guardarPersona(persona);
+        // Guardar cambios
+        Paciente guardado = pacienteServicio.guardarPaciente(paciente);
 
-        // Guardar paciente
-        Paciente pacienteGuardado = pacienteServicio.guardarPaciente(paciente);
+        // Convertir a PacienteResponse (DTO)
+        PacienteResponse response = new PacienteResponse(
+                guardado.getId_paciente(),
+                guardado.getPersona().getNombre(),
+                guardado.getPersona().getApellido(),
+                guardado.getPersona().getDni(),
+                guardado.getPersona().getEmail(),
+                guardado.getPersona().getTelefono(),
+                guardado.getPersona().getIsActive(),
+                coberturas.stream().map(c -> c.getNombre_cobertura()).toList()
+        );
 
-        return ResponseEntity.ok(pacienteGuardado);
+        return ResponseEntity.ok(response);
     }
 
     // DELETE: baja logica paciente
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> bajaLogicaPaciente(@PathVariable Long id) {
+    public ResponseEntity<BajaPacienteResponse> bajaLogicaPaciente(@PathVariable Long id) {
         // Buscar paciente
         Paciente paciente = pacienteServicio.buscarPacientePorId(id);
         if (paciente == null) {
@@ -146,8 +185,16 @@ public class PacienteController {
         persona.setIsActive("Inactivo");
         personaServicio.guardarPersona(persona);
 
-        return ResponseEntity.ok("Paciente dado de baja lógicamente");
+        // Crear DTO de respuesta
+        BajaPacienteResponse response = new BajaPacienteResponse(
+                paciente.getId_paciente(),
+                persona.getNombre(),
+                persona.getApellido(),
+                persona.getIsActive(),
+                "Paciente dado de baja lógicamente"
+        );
 
+        return ResponseEntity.ok(response);
     }
 
 }

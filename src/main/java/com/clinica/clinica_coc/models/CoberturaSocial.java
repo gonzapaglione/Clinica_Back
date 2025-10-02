@@ -1,10 +1,18 @@
 package com.clinica.clinica_coc.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
+
+@JsonIdentityInfo(
+    generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "id_cob_social"
+)
 
 @Entity
 @Table(name = "cob_social")
