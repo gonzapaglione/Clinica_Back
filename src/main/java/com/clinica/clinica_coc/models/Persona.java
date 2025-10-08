@@ -1,10 +1,13 @@
 package com.clinica.clinica_coc.models;
 
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,12 +30,18 @@ public class Persona {
     private Long dni;
 
     private String email;
-    private String username;
     private String password;
 
     private String domicilio;
     private String telefono;
-    
+
     @Column(name = "isActive", nullable = false, columnDefinition = "ENUM('Activo','Inactivo') default 'Activo'")
     private String isActive = "Activo";
+
+    @OneToMany(mappedBy = "idPersona")
+    private List<PersonaRol> personaRolList;
+
+    @OneToMany(mappedBy = "idOdontologo")
+    private List<EspecialidadOdontologo> especialidadOdontologoList;
+
 }

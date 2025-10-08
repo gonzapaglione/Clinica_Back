@@ -3,27 +3,19 @@ package com.clinica.clinica_coc.controllers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import com.clinica.clinica_coc.services.PersonaServicio;
+import com.clinica.clinica_coc.DTO.PersonaDTO;
+import com.clinica.clinica_coc.DTO.RolDTO;
 import com.clinica.clinica_coc.models.Persona;
 
 import java.util.List;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
-@RequestMapping("/api/personas") // http://localhost:8080/api/personas
-//Conexion con el front
-@CrossOrigin(value = "http://localhost:5173")
-
+@RequestMapping("/api/personas")
+@CrossOrigin("http://localhost:5173")
 public class PersonaController {
 
     private static final Logger logger = LoggerFactory.getLogger(PersonaController.class);
@@ -31,53 +23,70 @@ public class PersonaController {
     @Autowired
     private PersonaServicio personaServicio;
 
-    // GET: listar todas las personas
-    @GetMapping()
-    public ResponseEntity<List<Persona>> listarPersonas() {
+    // GET: listar todas las personas con roles
+    @GetMapping
+    public ResponseEntity<List<PersonaDTO>> listarPersonas() {
         List<Persona> personas = personaServicio.listarPersonas();
 
         if (personas.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 204 No content
+            return ResponseEntity.noContent().build();
         }
 
-        personas.forEach(persona -> logger.info("ID: " + persona.toString()));
-        return ResponseEntity.ok(personas); // 200 OK con la lista
+        List<PersonaDTO> personasDTO = personas.stream().map(this::convertirADTO).toList();
+        return ResponseEntity.ok(personasDTO);
     }
 
-    // GET: listar por id
+    // GET: listar persona por ID con roles
     @GetMapping("/{id}")
-    public ResponseEntity<Persona> listarPersonaPorId(@PathVariable Long id) {
+    public ResponseEntity<PersonaDTO> listarPersonaPorId(@PathVariable Long id) {
         Persona persona = personaServicio.buscarPersonaPorId(id);
 
         if (persona == null) {
-            return ResponseEntity.notFound().build(); // 404 si no existe
+            return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(persona); // 200 OK con la persona
+        PersonaDTO dto = convertirADTO(persona);
+        return ResponseEntity.ok(dto);
     }
 
     // POST: agregar persona
     @PostMapping
-    public ResponseEntity<Persona> agregarPersona(@RequestBody Persona persona) {
-        logger.info("Persona a agregar: " + persona.toString());
+    public ResponseEntity<PersonaDTO> agregarPersona(@RequestBody Persona persona) {
+        logger.info("Persona a agregar: " + persona);
+
         Persona nuevaPersona = personaServicio.guardarPersona(persona);
 
         if (nuevaPersona == null) {
-            // Si hubo un error al guardar
             return ResponseEntity.badRequest().build();
         }
 
-        // 201 Created con el objeto creado en el body
-        return ResponseEntity.status(201).body(nuevaPersona);
+        // Convertir a DTO
+        PersonaDTO dto = new PersonaDTO();
+        dto.setId_persona(nuevaPersona.getId_persona());
+        dto.setNombre(nuevaPersona.getNombre());
+        dto.setApellido(nuevaPersona.getApellido());
+        dto.setDni(nuevaPersona.getDni());
+        dto.setEmail(nuevaPersona.getEmail());
+        dto.setPassword(nuevaPersona.getPassword());
+        dto.setDomicilio(nuevaPersona.getDomicilio());
+        dto.setTelefono(nuevaPersona.getTelefono());
+        dto.setIsActive(nuevaPersona.getIsActive());
+
+        // Roles
+        List<RolDTO> rolesDTO = nuevaPersona.getPersonaRolList().stream()
+                .map(pr -> new RolDTO(pr.getIdRol().getId_rol(), pr.getIdRol().getNombre_rol()))
+                .toList();
+        dto.setRoles(rolesDTO);
+
+        return ResponseEntity.status(201).body(dto);
     }
 
     // PUT: editar persona
     @PutMapping("/{id}")
-    public ResponseEntity<Persona> editarPersona(
+    public ResponseEntity<PersonaDTO> editarPersona(
             @PathVariable Long id,
             @RequestBody Persona personaActualizada) {
 
-        // Buscar la persona existente
         Persona persona = personaServicio.buscarPersonaPorId(id);
         if (persona == null) {
             return ResponseEntity.notFound().build();
@@ -88,31 +97,68 @@ public class PersonaController {
         persona.setApellido(personaActualizada.getApellido());
         persona.setDni(personaActualizada.getDni());
         persona.setEmail(personaActualizada.getEmail());
-        persona.setUsername(personaActualizada.getUsername());
         persona.setPassword(personaActualizada.getPassword());
         persona.setDomicilio(personaActualizada.getDomicilio());
         persona.setTelefono(personaActualizada.getTelefono());
-
-        // Guardar cambios
+        persona.setIsActive(personaActualizada.getIsActive());
         Persona personaGuardada = personaServicio.guardarPersona(persona);
 
-        return ResponseEntity.ok(personaGuardada);
+        // Convertir a DTO
+        PersonaDTO dto = new PersonaDTO();
+        dto.setId_persona(personaGuardada.getId_persona());
+        dto.setNombre(personaGuardada.getNombre());
+        dto.setApellido(personaGuardada.getApellido());
+        dto.setDni(personaGuardada.getDni());
+        dto.setEmail(personaGuardada.getEmail());
+        dto.setPassword(personaGuardada.getPassword());
+        dto.setDomicilio(personaGuardada.getDomicilio());
+        dto.setTelefono(personaGuardada.getTelefono());
+        dto.setIsActive(personaGuardada.getIsActive());
+
+        // Roles
+        List<RolDTO> rolesDTO = personaGuardada.getPersonaRolList().stream()
+                .map(pr -> new RolDTO(pr.getIdRol().getId_rol(), pr.getIdRol().getNombre_rol()))
+                .toList();
+        dto.setRoles(rolesDTO);
+
+        return ResponseEntity.ok(dto);
     }
 
-    // DELETE: baja logica
+    // DELETE: baja lógica
     @DeleteMapping("/{id}")
     public ResponseEntity<String> bajaLogicaPersona(@PathVariable Long id) {
-
         Persona persona = personaServicio.buscarPersonaPorId(id);
         if (persona == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Cambiar estado a Inactivo
         persona.setIsActive("Inactivo");
         personaServicio.guardarPersona(persona);
 
         return ResponseEntity.ok("Persona dada de baja lógicamente");
     }
 
+    // Método auxiliar para convertir Persona a PersonaDTO
+    private PersonaDTO convertirADTO(Persona persona) {
+        PersonaDTO dto = new PersonaDTO();
+        dto.setId_persona(persona.getId_persona());
+        dto.setNombre(persona.getNombre());
+        dto.setApellido(persona.getApellido());
+        dto.setDni(persona.getDni());
+        dto.setEmail(persona.getEmail());
+        dto.setPassword(persona.getPassword());
+        dto.setDomicilio(persona.getDomicilio());
+        dto.setTelefono(persona.getTelefono());
+        dto.setIsActive(persona.getIsActive());
+
+        // Roles
+        List<RolDTO> rolesDTO = persona.getPersonaRolList() != null
+                ? persona.getPersonaRolList().stream()
+                        .map(pr -> new RolDTO(pr.getIdRol().getId_rol(), pr.getIdRol().getNombre_rol()))
+                        .toList()
+                : List.of();
+        dto.setRoles(rolesDTO);
+
+        return dto;
+    }
 }

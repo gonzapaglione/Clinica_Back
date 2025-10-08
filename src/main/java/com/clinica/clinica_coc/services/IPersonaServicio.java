@@ -8,7 +8,11 @@ public interface IPersonaServicio {
 
     public List<Persona> listarPersonas();
 
+    public List<Persona> listarOdontologos();
+
     public Persona buscarPersonaPorId(Long id);
+
+    public Persona buscarOdontologoPorId(Long id);
 
     // Crear y actualizar comparten el mismo metodo
     public Persona guardarPersona(Persona persona);
