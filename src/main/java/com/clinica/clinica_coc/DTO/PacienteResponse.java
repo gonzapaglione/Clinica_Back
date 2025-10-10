@@ -13,9 +13,10 @@ public class PacienteResponse {
     private Long idPaciente;
     private String nombre;
     private String apellido;
-    private Long DNI;
+    private Long dni;
     private String email;
     private String telefono;
-    private String estado;
-    private List<String> coberturas;  // solo los nombres de las coberturas
+    private String domicilio;
+    private String isActive;
+    private List<String> coberturas; // solo los nombres de las coberturas
 }

@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/pacientes") // http://localhost:8080/api/pacientes
-//Conexion con el front
+// Conexion con el front
 @CrossOrigin("http://localhost:5173")
 public class PacienteController {
 
@@ -54,20 +54,19 @@ public class PacienteController {
         }
 
         // Convertimos cada Paciente a PacienteResponse
-        List<PacienteResponse> response = pacientes.stream().map(p
-                -> new PacienteResponse(
-                        p.getId_paciente(),
-                        p.getPersona().getNombre(),
-                        p.getPersona().getApellido(),
-                        p.getPersona().getDni(),
-                        p.getPersona().getEmail(),
-                        p.getPersona().getTelefono(),
-                        p.getPersona().getIsActive(),
-                        p.getCoberturas().stream()
-                                .map(c -> c.getNombre_cobertura())
-                                .toList()
-                )
-        ).toList();
+        List<PacienteResponse> response = pacientes.stream().map(p -> new PacienteResponse(
+                p.getId_paciente(),
+                p.getPersona().getNombre(),
+                p.getPersona().getApellido(),
+                p.getPersona().getDni(),
+                p.getPersona().getEmail(),
+                p.getPersona().getTelefono(),
+                p.getPersona().getDomicilio(),
+                p.getPersona().getIsActive(),
+                p.getCoberturas().stream()
+                        .map(c -> c.getNombre_cobertura())
+                        .toList()))
+                .toList();
 
         return ResponseEntity.ok(response);
     }
@@ -88,11 +87,11 @@ public class PacienteController {
                 p.getPersona().getDni(),
                 p.getPersona().getEmail(),
                 p.getPersona().getTelefono(),
+                p.getPersona().getDomicilio(),
                 p.getPersona().getIsActive(),
                 p.getCoberturas().stream()
                         .map(c -> c.getNombre_cobertura())
-                        .toList()
-        );
+                        .toList());
 
         return ResponseEntity.ok(response); // 200 OK : con el DTO del paciente
     }
@@ -130,9 +129,9 @@ public class PacienteController {
                 persona.getDni(),
                 persona.getEmail(),
                 persona.getTelefono(),
+                persona.getDomicilio(),
                 persona.getIsActive(),
-                coberturas.stream().map(c -> c.getNombre_cobertura()).toList()
-        );
+                coberturas.stream().map(c -> c.getNombre_cobertura()).toList());
 
         return ResponseEntity.ok(response);
     }
@@ -164,9 +163,9 @@ public class PacienteController {
                 guardado.getPersona().getDni(),
                 guardado.getPersona().getEmail(),
                 guardado.getPersona().getTelefono(),
+                guardado.getPersona().getDomicilio(),
                 guardado.getPersona().getIsActive(),
-                coberturas.stream().map(c -> c.getNombre_cobertura()).toList()
-        );
+                coberturas.stream().map(c -> c.getNombre_cobertura()).toList());
 
         return ResponseEntity.ok(response);
     }
@@ -191,8 +190,7 @@ public class PacienteController {
                 persona.getNombre(),
                 persona.getApellido(),
                 persona.getIsActive(),
-                "Paciente dado de baja lógicamente"
-        );
+                "Paciente dado de baja lógicamente");
 
         return ResponseEntity.ok(response);
     }
