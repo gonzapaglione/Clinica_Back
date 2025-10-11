@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.models;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -39,9 +40,9 @@ public class Persona {
     private String isActive = "Activo";
 
     @OneToMany(mappedBy = "idPersona")
-    private List<PersonaRol> personaRolList;
+    private List<PersonaRol> personaRolList = new ArrayList<>();
 
     @OneToMany(mappedBy = "idOdontologo")
-    private List<EspecialidadOdontologo> especialidadOdontologoList;
+    private List<EspecialidadOdontologo> especialidadOdontologoList = new ArrayList<>();
 
 }

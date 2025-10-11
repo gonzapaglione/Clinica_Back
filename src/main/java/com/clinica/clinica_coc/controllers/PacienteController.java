@@ -11,10 +11,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.clinica.clinica_coc.services.PacienteServicio;
+import com.clinica.clinica_coc.services.PersonaRolServicio;
 import com.clinica.clinica_coc.services.PersonaServicio;
 import com.clinica.clinica_coc.services.CoberturaSocialServicio;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Persona;
+import com.clinica.clinica_coc.models.PersonaRol;
+import com.clinica.clinica_coc.models.Rol;
 import com.clinica.clinica_coc.models.CoberturaSocial;
 
 import java.util.List;
@@ -43,6 +46,9 @@ public class PacienteController {
 
     @Autowired
     private CoberturaSocialServicio coberturaServicio;
+
+    @Autowired
+    private PersonaRolServicio personaRolServicio;
 
     // GET: listar todos
     @GetMapping()
@@ -96,76 +102,55 @@ public class PacienteController {
         return ResponseEntity.ok(response); // 200 OK : con el DTO del paciente
     }
 
-    // POST: agregar paciente
+    // POST: agregar paciente (controller limpio)
     @PostMapping()
-    public ResponseEntity<PacienteResponse> agregarPaciente(
-            @RequestBody PacienteRequest request) {
+    public ResponseEntity<PacienteResponse> agregarPaciente(@RequestBody PacienteRequest request) {
 
-        // Buscar persona
-        Persona persona = personaServicio.buscarPersonaPorId(request.getPersonaId());
-        if (persona == null) {
-            return ResponseEntity.badRequest().body(null); // persona no encontrada
-        }
+        // Toda la lógica se delega al service
+        Paciente pacienteGuardado = pacienteServicio.crearPacienteConPersonaYRol(
+                request.getPersona(),
+                request.getCoberturasIds());
 
-        // Buscar coberturas
-        List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(request.getCoberturasIds());
-
-        if (coberturas.isEmpty()) {
-            return ResponseEntity.badRequest().body(null); // ninguna cobertura encontrada
-        }
-
-        Paciente paciente = new Paciente();
-        paciente.setPersona(persona);
-        paciente.setCoberturas(coberturas);
-
-        // Guardar paciente
-        Paciente pacienteGuardado = pacienteServicio.guardarPaciente(paciente);
-
-        // Convertir a PacienteResponse (DTO)
         PacienteResponse response = new PacienteResponse(
                 pacienteGuardado.getId_paciente(),
-                persona.getNombre(),
-                persona.getApellido(),
-                persona.getDni(),
-                persona.getEmail(),
-                persona.getTelefono(),
-                persona.getDomicilio(),
-                persona.getIsActive(),
-                coberturas.stream().map(c -> c.getNombre_cobertura()).toList());
+                pacienteGuardado.getPersona().getNombre(),
+                pacienteGuardado.getPersona().getApellido(),
+                pacienteGuardado.getPersona().getDni(),
+                pacienteGuardado.getPersona().getEmail(),
+                pacienteGuardado.getPersona().getTelefono(),
+                pacienteGuardado.getPersona().getDomicilio(),
+                pacienteGuardado.getPersona().getIsActive(),
+                pacienteGuardado.getCoberturas().stream().map(c -> c.getNombre_cobertura()).toList());
 
         return ResponseEntity.ok(response);
     }
 
-    // PUT: editar paciente.
+    // PUT: editar paciente
     @PutMapping("/{id}")
     public ResponseEntity<PacienteResponse> editarPaciente(
             @PathVariable Long id,
             @RequestBody PacienteRequest request) {
 
-        // Buscar paciente existente
-        Paciente paciente = pacienteServicio.buscarPacientePorId(id);
-        if (paciente == null) {
+        // Delegamos toda la lógica al service
+        Paciente pacienteEditado = pacienteServicio.editarPaciente(id, request);
+
+        if (pacienteEditado == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Actualizar coberturas
-        List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(request.getCoberturasIds());
-        paciente.setCoberturas(coberturas);
-
-        // Guardar cambios
-        Paciente guardado = pacienteServicio.guardarPaciente(paciente);
-
-        // Convertir a PacienteResponse (DTO)
+        // Convertir a DTO
         PacienteResponse response = new PacienteResponse(
-                guardado.getId_paciente(),
-                guardado.getPersona().getNombre(),
-                guardado.getPersona().getApellido(),
-                guardado.getPersona().getDni(),
-                guardado.getPersona().getEmail(),
-                guardado.getPersona().getTelefono(),
-                guardado.getPersona().getDomicilio(),
-                guardado.getPersona().getIsActive(),
-                coberturas.stream().map(c -> c.getNombre_cobertura()).toList());
+                pacienteEditado.getId_paciente(),
+                pacienteEditado.getPersona().getNombre(),
+                pacienteEditado.getPersona().getApellido(),
+                pacienteEditado.getPersona().getDni(),
+                pacienteEditado.getPersona().getEmail(),
+                pacienteEditado.getPersona().getTelefono(),
+                pacienteEditado.getPersona().getDomicilio(),
+                pacienteEditado.getPersona().getIsActive(),
+                pacienteEditado.getCoberturas().stream()
+                        .map(c -> c.getNombre_cobertura())
+                        .toList());
 
         return ResponseEntity.ok(response);
     }
