@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.clinica.clinica_coc.services.PersonaServicio;
-import com.clinica.clinica_coc.DTO.OdontologoDTO;
+import com.clinica.clinica_coc.DTO.OdontologoResponse;
 import com.clinica.clinica_coc.DTO.EspecialidadDTO;
 import com.clinica.clinica_coc.models.Persona;
 
@@ -26,15 +26,15 @@ public class OdontologoController {
 
     // GET: listar todos los odontólogos con especialidades
     @GetMapping
-    public ResponseEntity<List<OdontologoDTO>> listarOdontologos() {
+    public ResponseEntity<List<OdontologoResponse>> listarOdontologos() {
         List<Persona> odontologos = personaServicio.listarOdontologos();
 
         if (odontologos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
-        List<OdontologoDTO> odontologosDTO = odontologos.stream()
-                .map(this::convertirADTO)
+        List<OdontologoResponse> odontologosDTO = odontologos.stream()
+                .map(this::convertirAResponse)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(odontologosDTO);
@@ -42,55 +42,48 @@ public class OdontologoController {
 
     // GET: listar por id
     @GetMapping("/{id}")
-    public ResponseEntity<OdontologoDTO> listarOdontologoPorId(@PathVariable Long id) {
+    public ResponseEntity<OdontologoResponse> listarOdontologoPorId(@PathVariable Long id) {
         Persona persona = personaServicio.buscarOdontologoPorId(id); // filtrado por rol
 
         if (persona == null) {
             return ResponseEntity.notFound().build(); // 404 si no es odontólogo
         }
 
-        OdontologoDTO dto = convertirADTO(persona);
+        OdontologoResponse dto = convertirAResponse(persona);
         return ResponseEntity.ok(dto);
     }
 
-    // POST: agregar odontólogo
+    // POST: agregar odontólogo (acepta Persona + lista de especialidadesIds)
     @PostMapping
-    public ResponseEntity<OdontologoDTO> agregarOdontologo(@RequestBody Persona persona) {
-        logger.info("Odontólogo a agregar: " + persona);
+    public ResponseEntity<OdontologoResponse> agregarOdontologo(
+            @RequestBody com.clinica.clinica_coc.DTO.OdontologoRequest request) {
+        logger.info("Odontólogo a agregar: " + request);
 
-        Persona nuevaPersona = personaServicio.guardarPersona(persona);
+        Persona nuevaPersona = personaServicio.crearOdontologoConPersonaYRol(
+                request.getPersona(), request.getEspecialidadesIds());
 
         if (nuevaPersona == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        OdontologoDTO dto = convertirADTO(nuevaPersona);
+        OdontologoResponse dto = convertirAResponse(nuevaPersona);
         return ResponseEntity.status(201).body(dto);
     }
 
-    // PUT: editar odontólogo
+    // PUT: editar odontólogo (misma forma que POST: persona + especialidadesIds)
     @PutMapping("/{id}")
-    public ResponseEntity<OdontologoDTO> editarOdontologo(
+    public ResponseEntity<OdontologoResponse> editarOdontologo(
             @PathVariable Long id,
-            @RequestBody Persona personaActualizada) {
+            @RequestBody com.clinica.clinica_coc.DTO.OdontologoRequest request) {
 
-        Persona persona = personaServicio.buscarPersonaPorId(id);
-        if (persona == null) {
+        Persona personaEditada = personaServicio.editarOdontologoConPersonaYRol(
+                id, request.getPersona(), request.getEspecialidadesIds());
+
+        if (personaEditada == null) {
             return ResponseEntity.notFound().build();
         }
 
-        persona.setNombre(personaActualizada.getNombre());
-        persona.setApellido(personaActualizada.getApellido());
-        persona.setDni(personaActualizada.getDni());
-        persona.setEmail(personaActualizada.getEmail());
-        persona.setPassword(personaActualizada.getPassword());
-        persona.setDomicilio(personaActualizada.getDomicilio());
-        persona.setTelefono(personaActualizada.getTelefono());
-        persona.setIsActive(personaActualizada.getIsActive());
-
-        Persona personaGuardada = personaServicio.guardarPersona(persona);
-
-        OdontologoDTO dto = convertirADTO(personaGuardada);
+        OdontologoResponse dto = convertirAResponse(personaEditada);
         return ResponseEntity.ok(dto);
     }
 
@@ -108,29 +101,31 @@ public class OdontologoController {
         return ResponseEntity.ok("Odontólogo dado de baja lógicamente");
     }
 
-    // Método auxiliar para convertir Persona a OdontologoDTO
-    private OdontologoDTO convertirADTO(Persona persona) {
-        OdontologoDTO dto = new OdontologoDTO();
-        dto.setId_persona(persona.getId_persona());
-        dto.setNombre(persona.getNombre());
-        dto.setApellido(persona.getApellido());
-        dto.setDni(persona.getDni());
-        dto.setEmail(persona.getEmail());
-        dto.setPassword(persona.getPassword());
-        dto.setDomicilio(persona.getDomicilio());
-        dto.setTelefono(persona.getTelefono());
-        dto.setIsActive(persona.getIsActive());
+    // Método auxiliar para convertir Persona a OdontologoResponse (formato plano
+    // para GET)
+    private OdontologoResponse convertirAResponse(Persona persona) {
+        OdontologoResponse response = new OdontologoResponse();
+        response.setId_persona(persona.getId_persona());
+        response.setNombre(persona.getNombre());
+        response.setApellido(persona.getApellido());
+        response.setDni(persona.getDni());
+        response.setEmail(persona.getEmail());
+        response.setPassword(persona.getPassword());
+        response.setDomicilio(persona.getDomicilio());
+        response.setTelefono(persona.getTelefono());
+        response.setIsActive(persona.getIsActive());
 
-        // Especialidades
+        // Especialidades (lista con id y nombre)
         List<EspecialidadDTO> especialidadesDTO = persona.getEspecialidadOdontologoList() != null
                 ? persona.getEspecialidadOdontologoList().stream()
+                        .filter(eo -> eo.getIdEspecialidad() != null)
                         .map(eo -> new EspecialidadDTO(
                                 eo.getIdEspecialidad().getId_especialidad(),
                                 eo.getIdEspecialidad().getNombre()))
                         .collect(Collectors.toList())
                 : List.of();
-        dto.setEspecialidades(especialidadesDTO);
+        response.setEspecialidades(especialidadesDTO);
 
-        return dto;
+        return response;
     }
 }
