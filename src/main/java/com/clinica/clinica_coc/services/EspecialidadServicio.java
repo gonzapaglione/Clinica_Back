@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import com.clinica.clinica_coc.DTO.EspecialidadDTO;
 
 @Service
 public class EspecialidadServicio {
@@ -23,6 +25,21 @@ public class EspecialidadServicio {
 
     public List<Especialidad> buscarPorIds(List<Long> ids) {
         return especialidadRepositorio.findAllById(ids);
+    }
+
+    // devolver DTOs con los nombres exactos esperados por el front
+    public List<EspecialidadDTO> findAllDtos() {
+        return especialidadRepositorio.findAll().stream()
+                .map(e -> new EspecialidadDTO(e.getId_especialidad(), e.getNombre()))
+                .collect(Collectors.toList());
+    }
+
+    // devolver DTO por id
+    public EspecialidadDTO findDtoById(Long id) {
+        Especialidad e = buscarPorId(id);
+        if (e == null)
+            return null;
+        return new EspecialidadDTO(e.getId_especialidad(), e.getNombre());
     }
 
 }
