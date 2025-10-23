@@ -122,4 +122,9 @@ public class PacienteServicio implements IPacienteServicio {
         return pacienteRepositorio.save(paciente);
     }
 
+    public Paciente buscarPacientePorIdPersona(Long idPersona) {
+    return pacienteRepositorio.findByPersonaId(idPersona)
+            .orElse(null);
+        }
+
 }

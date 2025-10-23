@@ -18,7 +18,9 @@ import com.clinica.clinica_coc.services.CoberturaSocialServicio;
 
 import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +36,18 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        UserDetails user = personaRepositorio.findByEmail(request.getEmail()).orElseThrow();
-        String token = jwtService.getToken(user);
+       UserDetails userDetails = personaRepositorio.findByEmailWithRoles(request.getEmail())
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado post-autenticación"));
+Persona persona = (Persona) userDetails;
+Map<String, Object> extraClaims = new HashMap<>();
+extraClaims.put("idUsuario", persona.getId_persona());
+extraClaims.put("roles", userDetails.getAuthorities().stream()
+        .map(grantedAuthority -> grantedAuthority.getAuthority())
+        .collect(java.util.stream.Collectors.toList()));
+
+
+// 5. Genera el token USANDO los claims
+String token = jwtService.getToken(extraClaims, userDetails);
         return AuthResponse.builder().token(token).build();
     }
 

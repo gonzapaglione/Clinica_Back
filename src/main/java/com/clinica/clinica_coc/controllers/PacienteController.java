@@ -71,6 +71,18 @@ public class PacienteController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/persona/{idPersona}")
+    public ResponseEntity<PacienteResponse> listarPacientePorIdPersona(@PathVariable Long idPersona) {
+        Paciente paciente = pacienteServicio.buscarPacientePorIdPersona(idPersona);
+
+        if (paciente == null) {
+            return ResponseEntity.notFound().build(); // Devuelve 404 si no existe
+        }
+
+        PacienteResponse response = convertirAResponse(paciente);
+        return ResponseEntity.ok(response);
+    }
+
     // POST: agregar paciente
     @PostMapping()
     public ResponseEntity<PacienteResponse> agregarPaciente(@RequestBody PacienteRequest request) {
