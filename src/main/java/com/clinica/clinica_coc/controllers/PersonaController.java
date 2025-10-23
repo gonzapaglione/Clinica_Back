@@ -7,11 +7,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.clinica.clinica_coc.services.PersonaServicio;
+import com.clinica.clinica_coc.services.PersonaRolServicio;
 import com.clinica.clinica_coc.DTO.PersonaDTO;
+import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.DTO.RolDTO;
 import com.clinica.clinica_coc.models.Persona;
+import com.clinica.clinica_coc.models.PersonaRol;
+import com.clinica.clinica_coc.models.Rol;
+import com.clinica.clinica_coc.repositories.RolRepositorio;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/personas")
@@ -22,6 +28,12 @@ public class PersonaController {
 
     @Autowired
     private PersonaServicio personaServicio;
+
+    @Autowired
+    private PersonaRolServicio personaRolServicio;
+
+    @Autowired
+    private RolRepositorio rolRepositorio;
 
     // GET: listar todas las personas con roles
     @GetMapping
@@ -49,10 +61,21 @@ public class PersonaController {
         return ResponseEntity.ok(dto);
     }
 
-    // POST: agregar persona
+    // POST: agregar persona (con roles opcionales)
     @PostMapping
-    public ResponseEntity<PersonaDTO> agregarPersona(@RequestBody Persona persona) {
-        logger.info("Persona a agregar: " + persona);
+    public ResponseEntity<PersonaDTO> agregarPersona(@RequestBody PersonaRequest request) {
+        logger.info("Persona a agregar: " + request);
+
+        // 1. Crear y guardar persona
+        Persona persona = new Persona();
+        persona.setNombre(request.getNombre());
+        persona.setApellido(request.getApellido());
+        persona.setDni(request.getDni());
+        persona.setEmail(request.getEmail());
+        persona.setPassword(request.getPassword());
+        persona.setDomicilio(request.getDomicilio());
+        persona.setTelefono(request.getTelefono());
+        persona.setIsActive(request.getIsActive() != null ? request.getIsActive() : "Activo");
 
         Persona nuevaPersona = personaServicio.guardarPersona(persona);
 
@@ -60,73 +83,82 @@ public class PersonaController {
             return ResponseEntity.badRequest().build();
         }
 
-        // Convertir a DTO
-        PersonaDTO dto = new PersonaDTO();
-        dto.setId_persona(nuevaPersona.getId_persona());
-        dto.setNombre(nuevaPersona.getNombre());
-        dto.setApellido(nuevaPersona.getApellido());
-        dto.setDni(nuevaPersona.getDni());
-        dto.setEmail(nuevaPersona.getEmail());
-        dto.setPassword(nuevaPersona.getPassword());
-        dto.setDomicilio(nuevaPersona.getDomicilio());
-        dto.setTelefono(nuevaPersona.getTelefono());
-        dto.setIsActive(nuevaPersona.getIsActive());
+        // 2. Asignar roles si vienen (OPCIONAL)
+        if (request.getRolesIds() != null && !request.getRolesIds().isEmpty()) {
+            for (Long rolId : request.getRolesIds()) {
+                Rol rol = rolRepositorio.findById(rolId)
+                        .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + rolId));
+                PersonaRol personaRol = new PersonaRol();
+                personaRol.setIdPersona(nuevaPersona);
+                personaRol.setIdRol(rol);
+                personaRolServicio.guardar(personaRol);
+            }
+        }
 
-        // Roles
-        List<RolDTO> rolesDTO = nuevaPersona.getPersonaRolList().stream()
-                .map(pr -> new RolDTO(pr.getIdRol().getId_rol(), pr.getIdRol().getNombre_rol()))
-                .toList();
-        dto.setRoles(rolesDTO);
+        // 3. Recargar persona con roles y convertir a DTO
+        Persona personaConRoles = personaServicio.buscarPersonaPorId(nuevaPersona.getId_persona());
+        PersonaDTO dto = convertirADTO(personaConRoles);
 
         return ResponseEntity.status(201).body(dto);
     }
 
-    // PUT: editar persona
+    // PUT: editar persona (con roles opcionales)
     @PutMapping("/{id}")
     public ResponseEntity<PersonaDTO> editarPersona(
             @PathVariable Long id,
-            @RequestBody Persona personaActualizada) {
+            @RequestBody PersonaRequest request) {
 
         Persona persona = personaServicio.buscarPersonaPorId(id);
         if (persona == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Actualizar campos
-        persona.setNombre(personaActualizada.getNombre());
-        persona.setApellido(personaActualizada.getApellido());
-        persona.setDni(personaActualizada.getDni());
-        persona.setEmail(personaActualizada.getEmail());
-        persona.setPassword(personaActualizada.getPassword());
-        persona.setDomicilio(personaActualizada.getDomicilio());
-        persona.setTelefono(personaActualizada.getTelefono());
-        persona.setIsActive(personaActualizada.getIsActive());
+        // 1. Actualizar campos de la persona
+        persona.setNombre(request.getNombre());
+        persona.setApellido(request.getApellido());
+        persona.setDni(request.getDni());
+        persona.setEmail(request.getEmail());
+        if (request.getPassword() != null) {
+            persona.setPassword(request.getPassword());
+        }
+        persona.setDomicilio(request.getDomicilio());
+        persona.setTelefono(request.getTelefono());
+        if (request.getIsActive() != null) {
+            persona.setIsActive(request.getIsActive());
+        }
+
         Persona personaGuardada = personaServicio.guardarPersona(persona);
 
-        // Convertir a DTO
-        PersonaDTO dto = new PersonaDTO();
-        dto.setId_persona(personaGuardada.getId_persona());
-        dto.setNombre(personaGuardada.getNombre());
-        dto.setApellido(personaGuardada.getApellido());
-        dto.setDni(personaGuardada.getDni());
-        dto.setEmail(personaGuardada.getEmail());
-        dto.setPassword(personaGuardada.getPassword());
-        dto.setDomicilio(personaGuardada.getDomicilio());
-        dto.setTelefono(personaGuardada.getTelefono());
-        dto.setIsActive(personaGuardada.getIsActive());
+        // 2. Actualizar roles si vienen (OPCIONAL)
+        if (request.getRolesIds() != null && !request.getRolesIds().isEmpty()) {
+            // Eliminar roles previos
+            if (personaGuardada.getPersonaRolList() != null && !personaGuardada.getPersonaRolList().isEmpty()) {
+                personaRolServicio.eliminarTodos(personaGuardada.getPersonaRolList());
+                personaGuardada.getPersonaRolList().clear(); // Limpiar la lista en memoria
+            }
 
-        // Roles
-        List<RolDTO> rolesDTO = personaGuardada.getPersonaRolList().stream()
-                .map(pr -> new RolDTO(pr.getIdRol().getId_rol(), pr.getIdRol().getNombre_rol()))
-                .toList();
-        dto.setRoles(rolesDTO);
+            // Asignar nuevos roles
+            for (Long rolId : request.getRolesIds()) {
+                Rol rol = rolRepositorio.findById(rolId)
+                        .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + rolId));
+                PersonaRol personaRol = new PersonaRol();
+                personaRol.setIdPersona(personaGuardada);
+                personaRol.setIdRol(rol);
+                PersonaRol personaRolGuardada = personaRolServicio.guardar(personaRol);
+                personaGuardada.getPersonaRolList().add(personaRolGuardada); // Agregar a la lista en memoria
+            }
+        }
+
+        // 3. Recargar persona con roles actualizados (para asegurar sincronización)
+        Persona personaActualizada = personaServicio.buscarPersonaPorId(personaGuardada.getId_persona());
+        PersonaDTO dto = convertirADTO(personaActualizada);
 
         return ResponseEntity.ok(dto);
     }
 
     // DELETE: baja lógica
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> bajaLogicaPersona(@PathVariable Long id) {
+    public ResponseEntity<?> bajaLogicaPersona(@PathVariable Long id) {
         Persona persona = personaServicio.buscarPersonaPorId(id);
         if (persona == null) {
             return ResponseEntity.notFound().build();
@@ -135,7 +167,15 @@ public class PersonaController {
         persona.setIsActive("Inactivo");
         personaServicio.guardarPersona(persona);
 
-        return ResponseEntity.ok("Persona dada de baja lógicamente");
+        // Recargar persona actualizada
+        Persona personaActualizada = personaServicio.buscarPersonaPorId(id);
+        PersonaDTO dto = convertirADTO(personaActualizada);
+
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("mensaje", "Persona dada de baja lógicamente");
+        response.put("datos", dto);
+
+        return ResponseEntity.ok(response);
     }
 
     // Método auxiliar para convertir Persona a PersonaDTO

@@ -14,4 +14,12 @@ public class PersonaRolServicio {
     public PersonaRol guardar(PersonaRol personaRol) {
         return personaRolRepositorio.save(personaRol);
     }
+
+    public void eliminar(Long id) {
+        personaRolRepositorio.deleteById(id);
+    }
+
+    public void eliminarTodos(Iterable<PersonaRol> personaRoles) {
+        personaRolRepositorio.deleteAll(personaRoles);
+    }
 }

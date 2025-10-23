@@ -28,6 +28,7 @@ public class Persona {
 
     private String nombre;
     private String apellido;
+    @Column(name = "DNI", unique = true)
     private Long dni;
 
     private String email;
@@ -36,13 +37,14 @@ public class Persona {
     private String domicilio;
     private String telefono;
 
-    @Column(name = "isActive", nullable = false, columnDefinition = "ENUM('Activo','Inactivo') default 'Activo'")
+    @Column(name = "is_active", nullable = false, columnDefinition = "ENUM('Activo','Inactivo') default 'Activo'")
     private String isActive = "Activo";
 
     @OneToMany(mappedBy = "idPersona")
     private List<PersonaRol> personaRolList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "idOdontologo")
-    private List<EspecialidadOdontologo> especialidadOdontologoList = new ArrayList<>();
+    // Nota: la relación entre odontólogo y especialidades ahora se maneja por las
+    // entidades Odontologo y
+    // EspecialidadOdontologo. Se eliminó la relación directa desde Persona.
 
 }

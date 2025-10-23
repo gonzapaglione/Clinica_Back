@@ -10,15 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OdontologoResponse {
-    private Long id_persona;
-    private String nombre;
-    private String apellido;
-    private Long dni;
-    private String email;
-    private String password;
-    private String domicilio;
-    private String telefono;
-    private String isActive = "Activo";
-
+    private Long id_odontologo;
+    private PersonaBasicDTO persona;
     private List<EspecialidadDTO> especialidades;
 }

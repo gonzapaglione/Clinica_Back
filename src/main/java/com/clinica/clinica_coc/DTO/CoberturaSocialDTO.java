@@ -1,7 +1,5 @@
 package com.clinica.clinica_coc.DTO;
 
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PacienteRequest {
-
-    private PersonaRequest persona;
-    private List<Long> coberturasIds;
+public class CoberturaSocialDTO {
+    private Long id_cob_social;
+    private String nombre_cobertura;
 }

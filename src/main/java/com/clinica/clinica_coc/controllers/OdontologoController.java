@@ -6,13 +6,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.clinica.clinica_coc.services.PersonaServicio;
+import com.clinica.clinica_coc.DTO.OdontologoRequest;
 import com.clinica.clinica_coc.DTO.OdontologoResponse;
+import com.clinica.clinica_coc.DTO.PersonaBasicDTO;
+import com.clinica.clinica_coc.DTO.BajaResponse;
 import com.clinica.clinica_coc.DTO.EspecialidadDTO;
+import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Persona;
+import com.clinica.clinica_coc.services.OdontologoServicio;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/odontologos")
@@ -22,12 +25,12 @@ public class OdontologoController {
     private static final Logger logger = LoggerFactory.getLogger(OdontologoController.class);
 
     @Autowired
-    private PersonaServicio personaServicio;
+    private OdontologoServicio odontologoServicio;
 
-    // GET: listar todos los odontólogos con especialidades
+    // GET: listar todos los odontólogos
     @GetMapping
     public ResponseEntity<List<OdontologoResponse>> listarOdontologos() {
-        List<Persona> odontologos = personaServicio.listarOdontologos();
+        List<Odontologo> odontologos = odontologoServicio.listarOdontologos();
 
         if (odontologos.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -35,97 +38,107 @@ public class OdontologoController {
 
         List<OdontologoResponse> odontologosDTO = odontologos.stream()
                 .map(this::convertirAResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         return ResponseEntity.ok(odontologosDTO);
     }
 
-    // GET: listar por id
+    // GET: obtener odontólogo por id
     @GetMapping("/{id}")
-    public ResponseEntity<OdontologoResponse> listarOdontologoPorId(@PathVariable Long id) {
-        Persona persona = personaServicio.buscarOdontologoPorId(id); // filtrado por rol
+    public ResponseEntity<OdontologoResponse> obtenerOdontologoPorId(@PathVariable Long id) {
+        Odontologo odontologo = odontologoServicio.buscarOdontologoPorId(id);
 
-        if (persona == null) {
-            return ResponseEntity.notFound().build(); // 404 si no es odontólogo
+        if (odontologo == null) {
+            return ResponseEntity.notFound().build();
         }
 
-        OdontologoResponse dto = convertirAResponse(persona);
+        OdontologoResponse dto = convertirAResponse(odontologo);
         return ResponseEntity.ok(dto);
     }
 
-    // POST: agregar odontólogo (acepta Persona + lista de especialidadesIds)
+    // POST: crear nuevo odontólogo
     @PostMapping
-    public ResponseEntity<OdontologoResponse> agregarOdontologo(
-            @RequestBody com.clinica.clinica_coc.DTO.OdontologoRequest request) {
-        logger.info("Odontólogo a agregar: " + request);
+    public ResponseEntity<OdontologoResponse> crearOdontologo(@RequestBody OdontologoRequest request) {
+        logger.info("Creando odontólogo: " + request);
 
-        Persona nuevaPersona = personaServicio.crearOdontologoConPersonaYRol(
+        Odontologo nuevoOdontologo = odontologoServicio.crearOdontologoConPersonaYRol(
                 request.getPersona(), request.getEspecialidadesIds());
 
-        if (nuevaPersona == null) {
+        if (nuevoOdontologo == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        OdontologoResponse dto = convertirAResponse(nuevaPersona);
+        OdontologoResponse dto = convertirAResponse(nuevoOdontologo);
         return ResponseEntity.status(201).body(dto);
     }
 
-    // PUT: editar odontólogo (misma forma que POST: persona + especialidadesIds)
+    // PUT: editar odontólogo
     @PutMapping("/{id}")
     public ResponseEntity<OdontologoResponse> editarOdontologo(
             @PathVariable Long id,
-            @RequestBody com.clinica.clinica_coc.DTO.OdontologoRequest request) {
+            @RequestBody OdontologoRequest request) {
 
-        Persona personaEditada = personaServicio.editarOdontologoConPersonaYRol(
+        Odontologo odontologoEditado = odontologoServicio.editarOdontologo(
                 id, request.getPersona(), request.getEspecialidadesIds());
 
-        if (personaEditada == null) {
+        if (odontologoEditado == null) {
             return ResponseEntity.notFound().build();
         }
 
-        OdontologoResponse dto = convertirAResponse(personaEditada);
+        OdontologoResponse dto = convertirAResponse(odontologoEditado);
         return ResponseEntity.ok(dto);
     }
 
-    // DELETE: baja lógica
+    // DELETE: dar de baja lógica
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> bajaLogicaOdontologo(@PathVariable Long id) {
-        Persona persona = personaServicio.buscarPersonaPorId(id);
-        if (persona == null) {
+    public ResponseEntity<BajaResponse> bajaLogicaOdontologo(@PathVariable Long id) {
+        Odontologo odontologo = odontologoServicio.buscarOdontologoPorId(id);
+        if (odontologo == null) {
             return ResponseEntity.notFound().build();
         }
 
-        persona.setIsActive("Inactivo");
-        personaServicio.guardarPersona(persona);
+        odontologo.getPersona().setIsActive("Inactivo");
+        odontologoServicio.guardarOdontologo(odontologo);
 
-        return ResponseEntity.ok("Odontólogo dado de baja lógicamente");
+        // Recargar odontologo con datos actualizados
+        Odontologo odontologoActualizado = odontologoServicio.buscarOdontologoPorId(id);
+        OdontologoResponse response = convertirAResponse(odontologoActualizado);
+
+        BajaResponse bajaResponse = new BajaResponse(
+                "Odontólogo dado de baja lógicamente",
+                response);
+
+        return ResponseEntity.ok(bajaResponse);
     }
 
-    // Método auxiliar para convertir Persona a OdontologoResponse (formato plano
-    // para GET)
-    private OdontologoResponse convertirAResponse(Persona persona) {
-        OdontologoResponse response = new OdontologoResponse();
-        response.setId_persona(persona.getId_persona());
-        response.setNombre(persona.getNombre());
-        response.setApellido(persona.getApellido());
-        response.setDni(persona.getDni());
-        response.setEmail(persona.getEmail());
-        response.setPassword(persona.getPassword());
-        response.setDomicilio(persona.getDomicilio());
-        response.setTelefono(persona.getTelefono());
-        response.setIsActive(persona.getIsActive());
+    // Método auxiliar: convertir Odontologo a OdontologoResponse
+    private OdontologoResponse convertirAResponse(Odontologo odontologo) {
+        PersonaBasicDTO personaDTO = convertirPersonaABasicDTO(odontologo.getPersona());
 
-        // Especialidades (lista con id y nombre)
-        List<EspecialidadDTO> especialidadesDTO = persona.getEspecialidadOdontologoList() != null
-                ? persona.getEspecialidadOdontologoList().stream()
-                        .filter(eo -> eo.getIdEspecialidad() != null)
+        List<EspecialidadDTO> especialidadesDTO = odontologo.getEspecialidadOdontologoList() != null
+                ? odontologo.getEspecialidadOdontologoList().stream()
                         .map(eo -> new EspecialidadDTO(
-                                eo.getIdEspecialidad().getId_especialidad(),
-                                eo.getIdEspecialidad().getNombre()))
-                        .collect(Collectors.toList())
+                                eo.getEspecialidad().getId_especialidad(),
+                                eo.getEspecialidad().getNombre()))
+                        .toList()
                 : List.of();
-        response.setEspecialidades(especialidadesDTO);
 
-        return response;
+        return new OdontologoResponse(
+                odontologo.getId_odontologo(),
+                personaDTO,
+                especialidadesDTO);
+    }
+
+    // Método auxiliar para convertir Persona a PersonaBasicDTO (sin roles)
+    private PersonaBasicDTO convertirPersonaABasicDTO(Persona persona) {
+        return new PersonaBasicDTO(
+                persona.getId_persona(),
+                persona.getNombre(),
+                persona.getApellido(),
+                persona.getDni(),
+                persona.getEmail(),
+                persona.getDomicilio(),
+                persona.getTelefono(),
+                persona.getIsActive());
     }
 }

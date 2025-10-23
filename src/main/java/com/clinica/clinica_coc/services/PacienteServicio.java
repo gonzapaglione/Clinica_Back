@@ -1,6 +1,7 @@
 package com.clinica.clinica_coc.services;
 
 import com.clinica.clinica_coc.DTO.PacienteRequest;
+import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.models.CoberturaSocial;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Persona;
@@ -54,8 +55,16 @@ public class PacienteServicio implements IPacienteServicio {
         pacienteRepositorio.delete(paciente);
     }
 
-    public Paciente crearPacienteConPersonaYRol(Persona persona, List<Long> coberturasIds) {
-        // 1. Guardar persona usando el servicio
+    public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds) {
+        // 1. Crear Persona a partir de PersonaRequest
+        Persona persona = new Persona();
+        persona.setNombre(personaRequest.getNombre());
+        persona.setApellido(personaRequest.getApellido());
+        persona.setDni(personaRequest.getDni());
+        persona.setEmail(personaRequest.getEmail());
+        persona.setPassword(personaRequest.getPassword());
+        persona.setDomicilio(personaRequest.getDomicilio());
+        persona.setTelefono(personaRequest.getTelefono());
         persona.setIsActive("Activo");
         persona = personaServicio.guardarPersona(persona);
 
@@ -96,6 +105,9 @@ public class PacienteServicio implements IPacienteServicio {
             persona.setDomicilio(request.getPersona().getDomicilio());
             if (request.getPersona().getPassword() != null) {
                 persona.setPassword(request.getPersona().getPassword());
+            }
+            if (request.getPersona().getIsActive() != null) {
+                persona.setIsActive(request.getPersona().getIsActive());
             }
             personaServicio.guardarPersona(persona); // se guarda usando el servicio
         }
