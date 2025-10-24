@@ -1,9 +1,14 @@
 package com.clinica.clinica_coc.services;
 
+import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.repositories.PersonaRepositorio;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
 @Service
@@ -11,6 +16,9 @@ public class PersonaServicio implements IPersonaServicio {
 
     @Autowired
     private PersonaRepositorio personaRepositorio;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public List<Persona> listarPersonas() {
@@ -31,6 +39,38 @@ public class PersonaServicio implements IPersonaServicio {
     public void darBajaPersona(Persona persona) {
         persona.setIsActive("Inactivo");
         personaRepositorio.save(persona);
+    }
+
+    @Transactional
+    public Persona editarPersona(Long idPersona, PersonaRequest request) { // O tu método de edición
+        Persona persona = personaRepositorio.findById(idPersona)
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada"));
+
+        // Actualiza otros campos
+        persona.setNombre(request.getNombre());
+        persona.setApellido(request.getApellido());
+        persona.setEmail(request.getEmail());
+        persona.setDni(request.getDni());
+        persona.setDomicilio(request.getDomicilio());
+        persona.setTelefono(request.getTelefono());
+
+        // --- LÓGICA CONDICIONAL PARA CONTRASEÑA ---
+        String nuevaPassword = request.getPassword(); // Obtén la contraseña del request
+        
+        // Solo actualiza si se proporcionó una nueva contraseña NO vacía
+        if (nuevaPassword != null && !nuevaPassword.trim().isEmpty()) {
+            // Genera el NUEVO hash
+            String nuevoHash = passwordEncoder.encode(nuevaPassword);
+            // Guarda el NUEVO hash
+            persona.setPassword(nuevoHash);
+            System.out.println("Contraseña actualizada para usuario ID: " + idPersona); // Log de depuración
+        } else {
+            // Si la contraseña vino vacía o null, NO SE HACE NADA.
+            // El hash existente en la BD se mantiene.
+             System.out.println("Contraseña NO actualizada (campo vacío/null) para usuario ID: " + idPersona); // Log de depuración
+        }
+
+        return personaRepositorio.save(persona);
     }
 
 }

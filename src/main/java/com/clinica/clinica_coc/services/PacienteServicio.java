@@ -11,6 +11,8 @@ import com.clinica.clinica_coc.repositories.CoberturaSocialRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
 import com.clinica.clinica_coc.repositories.RolRepositorio;
 
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -97,6 +99,7 @@ public class PacienteServicio implements IPacienteServicio {
         return pacienteRepositorio.save(paciente);
     }
 
+    @Transactional
     public Paciente editarPaciente(Long id, PacienteRequest request) {
 
         // 1. Buscar paciente
@@ -107,19 +110,7 @@ public class PacienteServicio implements IPacienteServicio {
         // 2. Actualizar datos de la persona
         Persona persona = paciente.getPersona();
         if (request.getPersona() != null) {
-            persona.setNombre(request.getPersona().getNombre());
-            persona.setApellido(request.getPersona().getApellido());
-            persona.setDni(request.getPersona().getDni());
-            persona.setEmail(request.getPersona().getEmail());
-            persona.setTelefono(request.getPersona().getTelefono());
-            persona.setDomicilio(request.getPersona().getDomicilio());
-            if (request.getPersona().getPassword() != null) {
-                persona.setPassword(passwordEncoder.encode(request.getPersona().getPassword()));
-            }
-            if (request.getPersona().getIsActive() != null) {
-                persona.setIsActive(request.getPersona().getIsActive());
-            }
-            personaServicio.guardarPersona(persona); // se guarda usando el servicio
+            personaServicio.editarPersona(persona.getId_persona(), request.getPersona());
         }
         List<Long> coberturasIds = request.getCoberturasIds(); // Obtén los IDs del request
 

@@ -130,19 +130,7 @@ private PersonaRepositorio personaRepositorio;
         // Actualizar datos de la persona
         Persona persona = odontologo.getPersona();
         if (personaRequest != null) {
-            persona.setNombre(personaRequest.getNombre());
-            persona.setApellido(personaRequest.getApellido());
-            persona.setDni(personaRequest.getDni());
-            persona.setEmail(personaRequest.getEmail());
-            persona.setTelefono(personaRequest.getTelefono());
-            persona.setDomicilio(personaRequest.getDomicilio());
-            if (personaRequest.getPassword() != null) {
-                persona.setPassword(passwordEncoder.encode(personaRequest.getPassword()));
-            }
-            if (personaRequest.getIsActive() != null) {
-                persona.setIsActive(personaRequest.getIsActive());
-            }
-            personaServicio.guardarPersona(persona);
+            personaServicio.editarPersona(persona.getId_persona(), personaRequest);
         }
 
         // Actualizar especialidades si vienen
