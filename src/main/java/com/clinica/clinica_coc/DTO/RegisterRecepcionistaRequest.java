@@ -1,4 +1,4 @@
-package com.clinica.clinica_coc.auth;
+package com.clinica.clinica_coc.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
-    String token;
-    Long id_persona;
-    Long id_paciente;
+public class RegisterRecepcionistaRequest {
+    private PersonaRequest persona;
 }

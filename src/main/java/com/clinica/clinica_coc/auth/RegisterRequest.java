@@ -2,8 +2,7 @@ package com.clinica.clinica_coc.auth;
 
 import java.util.List;
 
-// import com.clinica.clinica_coc.models.CoberturaSocial; // ya no se usa aquí
-
+import com.clinica.clinica_coc.DTO.PersonaRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,14 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterRequest {
-    String nombre;
-    String apellido;
-    String email;
-    String domicilio;
-    String telefono;
-    Long dni;
-    String password;
-    // IDs de coberturas seleccionadas en el formulario de registro (Paciente)
-    List<Long> coberturaIds;
+    // Reutilizamos PersonaRequest para mantener el mismo formato del registro de
+    // odontólogo
+    private PersonaRequest persona;
+    // IDs de coberturas para pacientes
+    private List<Long> coberturaIds;
 
 }

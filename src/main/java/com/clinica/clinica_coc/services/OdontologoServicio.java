@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.models.Especialidad;
@@ -25,6 +26,9 @@ public class OdontologoServicio implements IOdontologoServicio {
 
     @Autowired
     private PersonaServicio personaServicio;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private EspecialidadRepositorio especialidadRepositorio;
@@ -69,7 +73,8 @@ public class OdontologoServicio implements IOdontologoServicio {
         persona.setApellido(personaRequest.getApellido());
         persona.setDni(personaRequest.getDni());
         persona.setEmail(personaRequest.getEmail());
-        persona.setPassword(personaRequest.getPassword());
+        // Encode password with application's PasswordEncoder
+        persona.setPassword(passwordEncoder.encode(personaRequest.getPassword()));
         persona.setDomicilio(personaRequest.getDomicilio());
         persona.setTelefono(personaRequest.getTelefono());
         persona.setIsActive("Activo");
@@ -81,7 +86,10 @@ public class OdontologoServicio implements IOdontologoServicio {
         PersonaRol personaRol = new PersonaRol();
         personaRol.setIdPersona(persona);
         personaRol.setIdRol(rolOdontologo);
-        personaRolServicio.guardar(personaRol);
+        PersonaRol savedPersonaRol = personaRolServicio.guardar(personaRol);
+        // añadir la relación a la persona en memoria para que se refleje en la
+        // respuesta
+        persona.getPersonaRolList().add(savedPersonaRol);
 
         // 3. Crear odontólogo
         Odontologo odontologo = new Odontologo();

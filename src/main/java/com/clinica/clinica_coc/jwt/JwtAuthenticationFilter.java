@@ -37,7 +37,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        userEmail = jwtService.getUsernameFromToken(token);
+        try {
+            userEmail = jwtService.getUsernameFromToken(token);
+        } catch (io.jsonwebtoken.ExpiredJwtException eje) {
+            // Token expired -> respond 401 with a JSON body
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\":\"token_expired\",\"message\":\"JWT expired\"}");
+            return;
+        } catch (io.jsonwebtoken.JwtException je) {
+            // Any other JWT parsing exception -> invalid token
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\":\"invalid_token\",\"message\":\"JWT invalid\"}");
+            return;
+        }
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             var personaOpt = personaRepositorio.findByEmailWithRoles(userEmail);
             if (personaOpt.isPresent()) {
@@ -61,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getTokenFromRequest(HttpServletRequest request) {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer")) {
+        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         } else {
             return null;

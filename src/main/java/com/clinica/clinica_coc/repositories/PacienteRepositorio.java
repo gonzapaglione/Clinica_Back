@@ -7,4 +7,5 @@ import com.clinica.clinica_coc.models.Paciente;
 
 @Repository
 public interface PacienteRepositorio extends JpaRepository<Paciente, Long> {
+	java.util.Optional<Paciente> findByPersona_Id_persona(Long id_persona);
 }

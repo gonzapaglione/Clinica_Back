@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ public class PersonaRol {
 
     @JoinColumn(name = "id_persona", referencedColumnName = "id_persona", nullable = false)
     @ManyToOne(optional = false)
+    @JsonBackReference
     private Persona idPersona;
 
     @JoinColumn(name = "id_rol", referencedColumnName = "id_rol", nullable = false)

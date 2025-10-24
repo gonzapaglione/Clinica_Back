@@ -7,6 +7,9 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,18 +41,23 @@ public class Persona implements UserDetails {
     private Long dni;
 
     private String email;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     private String domicilio;
     private String telefono;
 
     @Column(name = "is_active", nullable = false, columnDefinition = "ENUM('Activo','Inactivo') default 'Activo'")
+    @Builder.Default
     private String isActive = "Activo";
 
     @OneToMany(mappedBy = "idPersona")
+    @Builder.Default
+    @JsonManagedReference
     private List<PersonaRol> personaRolList = new ArrayList<>();
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // Mapear cada PersonaRol al nombre del rol y envolverlo en
         // SimpleGrantedAuthority
@@ -59,6 +67,15 @@ public class Persona implements UserDetails {
                 .map(rol -> new SimpleGrantedAuthority(rol.getNombre_rol()))
                 .toList();
 
+    }
+
+    // Exponer roles como lista de strings para respuestas JSON
+    public List<String> getRoles() {
+        return personaRolList.stream()
+                .map(pr -> pr.getIdRol())
+                .filter(r -> r != null)
+                .map(r -> r.getNombre_rol())
+                .toList();
     }
 
     @Override
