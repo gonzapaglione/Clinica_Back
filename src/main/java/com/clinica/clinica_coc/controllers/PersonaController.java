@@ -1,24 +1,26 @@
 package com.clinica.clinica_coc.controllers;
 
+import com.clinica.clinica_coc.DTO.CambioPasswordDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
 import com.clinica.clinica_coc.services.PersonaServicio;
 import com.clinica.clinica_coc.services.PersonaRolServicio;
 import com.clinica.clinica_coc.DTO.PersonaDTO;
 import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.DTO.RolDTO;
+import com.clinica.clinica_coc.exceptions.ResourceNotFoundException;
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.models.PersonaRol;
 import com.clinica.clinica_coc.models.Rol;
 import com.clinica.clinica_coc.repositories.RolRepositorio;
-
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/personas")
@@ -205,4 +207,27 @@ public class PersonaController {
 
         return dto;
     }
+    
+@PutMapping("/cambiar-password")
+public ResponseEntity<?> cambiarPassword(@RequestBody CambioPasswordDTO dto) {
+
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+    Persona usuario = personaServicio.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
+    
+    if (passwordEncoder.matches(dto.getContraseñaActual(), usuario.getPassword())) {
+        
+        // 3. Si coincide, hashear y guardar la NUEVA contraseña
+        String nuevoHash = passwordEncoder.encode(dto.getNuevaContraseña());
+        usuario.setPassword(nuevoHash);
+        personaServicio.save(usuario); 
+
+        return ResponseEntity.ok("Contraseña actualizada con éxito");
+
+    } else {
+        // 4. Si no coincide, devolver el error
+        return new ResponseEntity<>("La contraseña actual es incorrecta", HttpStatus.UNAUTHORIZED);
+    }
+}
 }
