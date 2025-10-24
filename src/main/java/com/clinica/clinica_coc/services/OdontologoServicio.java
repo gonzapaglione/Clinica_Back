@@ -31,9 +31,9 @@ public class OdontologoServicio implements IOdontologoServicio {
     private PersonaServicio personaServicio;
 
     @Autowired
-private PersonaRepositorio personaRepositorio;
+    private PersonaRepositorio personaRepositorio;
 
-@Autowired
+    @Autowired
     private PersonaRolRepositorio personaRolRepositorio;
 
     @Autowired
@@ -74,6 +74,24 @@ private PersonaRepositorio personaRepositorio;
         odontologoRepositorio.delete(odontologo);
     }
 
+    @Transactional
+    public Odontologo bajaLogicaOdontologo(Long idOdontologo) {
+        Odontologo odontologo = odontologoRepositorio.findById(idOdontologo)
+                .orElseThrow(() -> new RuntimeException(
+                        "Odontólogo no encontrado con id: " + idOdontologo));
+
+        Persona persona = odontologo.getPersona();
+        if (persona == null) {
+            throw new RuntimeException("El odontólogo no tiene una persona asociada.");
+        }
+
+        personaServicio.darBajaPersona(persona);
+
+        return odontologoRepositorio.findById(idOdontologo)
+                .orElseThrow(() -> new RuntimeException(
+                        "Odontólogo no encontrado tras la baja lógica con id: " + idOdontologo));
+    }
+
     @Override
     public Odontologo crearOdontologoConPersonaYRol(PersonaRequest personaRequest, List<Long> especialidadesIds) {
         // 1. Crear Persona a partir de PersonaRequest
@@ -82,7 +100,7 @@ private PersonaRepositorio personaRepositorio;
         persona.setApellido(personaRequest.getApellido());
         persona.setDni(personaRequest.getDni());
         persona.setEmail(personaRequest.getEmail());
-        persona.setPassword(passwordEncoder.encode(personaRequest.getPassword())); 
+        persona.setPassword(passwordEncoder.encode(personaRequest.getPassword()));
         persona.setDomicilio(personaRequest.getDomicilio());
         persona.setTelefono(personaRequest.getTelefono());
         persona.setIsActive("Activo");
@@ -158,65 +176,66 @@ private PersonaRepositorio personaRepositorio;
     }
 
     @Transactional
-public Odontologo asignarRolOdontologo(Long idPersona, List<Long> especialidadesIds) {
-    // 1. Buscar la persona
-    Persona persona = personaRepositorio.findById(idPersona)
-            .orElseThrow(() -> new RuntimeException("Persona no encontrada con id: " + idPersona));
+    public Odontologo asignarRolOdontologo(Long idPersona, List<Long> especialidadesIds) {
+        // 1. Buscar la persona
+        Persona persona = personaRepositorio.findById(idPersona)
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada con id: " + idPersona));
 
-    // 2. Verifica si ya es odontólogo
-    Optional<Odontologo> yaExiste = odontologoRepositorio.findByPersonaId(idPersona);
-    if (yaExiste.isPresent()) {
-        throw new RuntimeException("Esta persona ya es un odontólogo.");
-    }
-
-    // 3. Asignar el Rol de Odontólogo (ID 2)
-    Rol rolOdontologo = rolRepositorio.findById(2L) // Asumiendo 2L = Odontologo
-            .orElseThrow(() -> new RuntimeException("Rol odontólogo no encontrado"));
-    
-    // 4. Verificar si ya tiene el rol antes de añadirlo
-    boolean tieneRol = persona.getPersonaRolList().stream()
-        .anyMatch(pr -> pr.getIdRol().getId_rol().equals(2L));
-
-    if (!tieneRol) {
-        PersonaRol personaRol = new PersonaRol();
-        personaRol.setIdPersona(persona);
-        personaRol.setIdRol(rolOdontologo);
-        personaRolServicio.guardar(personaRol);
-    }
-
-    // 5. Crear la entidad Odontologo
-    Odontologo odontologo = new Odontologo();
-    odontologo.setPersona(persona);
-    odontologo = odontologoRepositorio.save(odontologo);
-
-    // 6. Asignar especialidades (lógica copiada de tu otro método)
-    if (especialidadesIds != null && !especialidadesIds.isEmpty()) {
-        for (Long especialidadId : especialidadesIds) {
-            Especialidad especialidad = especialidadRepositorio.findById(especialidadId)
-                    .orElseThrow(() -> new RuntimeException("Especialidad no encontrada con id: " + especialidadId));
-
-            EspecialidadOdontologo especialidadOdontologo = new EspecialidadOdontologo();
-            especialidadOdontologo.setOdontologo(odontologo);
-            especialidadOdontologo.setEspecialidad(especialidad);
-            especialidadOdontologoRepositorio.save(especialidadOdontologo);
+        // 2. Verifica si ya es odontólogo
+        Optional<Odontologo> yaExiste = odontologoRepositorio.findByPersonaId(idPersona);
+        if (yaExiste.isPresent()) {
+            throw new RuntimeException("Esta persona ya es un odontólogo.");
         }
-    }
-    
-    return odontologo;
-}
 
-@Transactional 
+        // 3. Asignar el Rol de Odontólogo (ID 2)
+        Rol rolOdontologo = rolRepositorio.findById(2L) // Asumiendo 2L = Odontologo
+                .orElseThrow(() -> new RuntimeException("Rol odontólogo no encontrado"));
+
+        // 4. Verificar si ya tiene el rol antes de añadirlo
+        boolean tieneRol = persona.getPersonaRolList().stream()
+                .anyMatch(pr -> pr.getIdRol().getId_rol().equals(2L));
+
+        if (!tieneRol) {
+            PersonaRol personaRol = new PersonaRol();
+            personaRol.setIdPersona(persona);
+            personaRol.setIdRol(rolOdontologo);
+            personaRolServicio.guardar(personaRol);
+        }
+
+        // 5. Crear la entidad Odontologo
+        Odontologo odontologo = new Odontologo();
+        odontologo.setPersona(persona);
+        odontologo = odontologoRepositorio.save(odontologo);
+
+        // 6. Asignar especialidades (lógica copiada de tu otro método)
+        if (especialidadesIds != null && !especialidadesIds.isEmpty()) {
+            for (Long especialidadId : especialidadesIds) {
+                Especialidad especialidad = especialidadRepositorio.findById(especialidadId)
+                        .orElseThrow(
+                                () -> new RuntimeException("Especialidad no encontrada con id: " + especialidadId));
+
+                EspecialidadOdontologo especialidadOdontologo = new EspecialidadOdontologo();
+                especialidadOdontologo.setOdontologo(odontologo);
+                especialidadOdontologo.setEspecialidad(especialidad);
+                especialidadOdontologoRepositorio.save(especialidadOdontologo);
+            }
+        }
+
+        return odontologo;
+    }
+
+    @Transactional
     public void quitarRolYOdontologo(Long idOdontologo) {
- 
+
         Odontologo odontologo = odontologoRepositorio.findById(idOdontologo)
                 .orElseThrow(() -> new RuntimeException("Odontólogo no encontrado con id: " + idOdontologo));
-       
+
         Persona persona = odontologo.getPersona();
         if (persona == null) {
-             throw new RuntimeException("El odontólogo no tiene una persona asociada.");
+            throw new RuntimeException("El odontólogo no tiene una persona asociada.");
         }
         Long idPersona = persona.getId_persona();
-        Long idRolOdontologo = 2L; 
+        Long idRolOdontologo = 2L;
 
         List<PersonaRol> rolesAEliminar = personaRolRepositorio.findSpecificRolesForPersona(idPersona, idRolOdontologo);
 
@@ -224,12 +243,13 @@ public Odontologo asignarRolOdontologo(Long idPersona, List<Long> especialidades
             personaRolRepositorio.deleteAll(rolesAEliminar);
             persona.getPersonaRolList().removeIf(pr -> pr.getIdRol().getId_rol().equals(idRolOdontologo));
         } else {
-             System.out.println("Advertencia: No se encontró el rol Odontólogo para la persona ID: " + idPersona);
+            System.out.println("Advertencia: No se encontró el rol Odontólogo para la persona ID: " + idPersona);
         }
 
-         if (odontologo.getEspecialidadOdontologoList() != null && !odontologo.getEspecialidadOdontologoList().isEmpty()) {
+        if (odontologo.getEspecialidadOdontologoList() != null
+                && !odontologo.getEspecialidadOdontologoList().isEmpty()) {
             especialidadOdontologoRepositorio.deleteAll(odontologo.getEspecialidadOdontologoList());
-         }
+        }
         // Ahora, elimina al odontólogo
         odontologoRepositorio.delete(odontologo);
     }

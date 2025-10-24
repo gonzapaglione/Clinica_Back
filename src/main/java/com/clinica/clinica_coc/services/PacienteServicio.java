@@ -67,6 +67,25 @@ public class PacienteServicio implements IPacienteServicio {
         pacienteRepositorio.delete(paciente);
     }
 
+    @Transactional
+    public Paciente bajaLogicaPaciente(Long idPaciente) {
+        Paciente paciente = pacienteRepositorio.findById(idPaciente)
+                .orElse(null);
+
+        if (paciente == null) {
+            return null;
+        }
+
+        Persona persona = paciente.getPersona();
+        if (persona == null) {
+            throw new RuntimeException("El paciente no tiene una persona asociada.");
+        }
+
+        personaServicio.darBajaPersona(persona);
+
+        return paciente;
+    }
+
     public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds) {
         // 1. Crear Persona a partir de PersonaRequest
         Persona persona = new Persona();
@@ -114,28 +133,29 @@ public class PacienteServicio implements IPacienteServicio {
         }
         List<Long> coberturasIds = request.getCoberturasIds(); // Obtén los IDs del request
 
-        // Inicializa la lista en el paciente si es null para evitar NullPointerException
+        // Inicializa la lista en el paciente si es null para evitar
+        // NullPointerException
         if (paciente.getCoberturas() == null) {
             paciente.setCoberturas(new ArrayList<>());
         }
-        
+
         // Limpia las coberturas anteriores
-        paciente.getCoberturas().clear(); 
+        paciente.getCoberturas().clear();
 
         // Si se proporcionaron nuevos IDs de cobertura...
         if (coberturasIds != null && !coberturasIds.isEmpty()) {
             List<CoberturaSocial> nuevasCoberturas = coberturaSocialRepositorio.findAllById(coberturasIds);
             // Añade las nuevas coberturas a la lista del paciente
-            paciente.getCoberturas().addAll(nuevasCoberturas); 
+            paciente.getCoberturas().addAll(nuevasCoberturas);
         }
-        
+
         // 4. Guardar paciente
         return pacienteRepositorio.save(paciente);
     }
 
     public Paciente buscarPacientePorIdPersona(Long idPersona) {
-    return pacienteRepositorio.findByPersonaId(idPersona)
-            .orElse(null);
-        }
+        return pacienteRepositorio.findByPersonaId(idPersona)
+                .orElse(null);
+    }
 
 }

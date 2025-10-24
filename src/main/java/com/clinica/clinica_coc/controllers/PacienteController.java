@@ -114,17 +114,11 @@ public class PacienteController {
     // DELETE: baja logica paciente
     @DeleteMapping("/{id}")
     public ResponseEntity<BajaResponse> bajaLogicaPaciente(@PathVariable Long id) {
-        Paciente paciente = pacienteServicio.buscarPacientePorId(id);
-        if (paciente == null) {
+        Paciente pacienteActualizado = pacienteServicio.bajaLogicaPaciente(id);
+        if (pacienteActualizado == null) {
             return ResponseEntity.notFound().build();
         }
 
-        Persona persona = paciente.getPersona();
-        persona.setIsActive("Inactivo");
-        personaServicio.guardarPersona(persona);
-
-        // Recargar paciente con datos actualizados
-        Paciente pacienteActualizado = pacienteServicio.buscarPacientePorId(id);
         PacienteResponse response = convertirAResponse(pacienteActualizado);
 
         BajaResponse bajaResponse = new BajaResponse(
