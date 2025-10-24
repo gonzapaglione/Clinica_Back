@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.clinica.clinica_coc.DTO.OdontologoRequest;
 import com.clinica.clinica_coc.DTO.OdontologoResponse;
 import com.clinica.clinica_coc.DTO.PersonaBasicDTO;
+import com.clinica.clinica_coc.DTO.AsignarOdontologoRequest;
 import com.clinica.clinica_coc.DTO.BajaResponse;
 import com.clinica.clinica_coc.DTO.EspecialidadDTO;
 import com.clinica.clinica_coc.models.Odontologo;
@@ -56,6 +57,18 @@ public class OdontologoController {
         return ResponseEntity.ok(dto);
     }
 
+    @GetMapping("/persona/{idPersona}")
+    public ResponseEntity<OdontologoResponse> obtenerOdontologoPorIdPersona(@PathVariable Long idPersona) {
+        Odontologo odontologo = odontologoServicio.buscarOdontologoPorIdPersona(idPersona);
+
+        if (odontologo == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        OdontologoResponse dto = convertirAResponse(odontologo);
+        return ResponseEntity.ok(dto);
+    }
+
     // POST: crear nuevo odontólogo
     @PostMapping
     public ResponseEntity<OdontologoResponse> crearOdontologo(@RequestBody OdontologoRequest request) {
@@ -90,25 +103,19 @@ public class OdontologoController {
     }
 
     // DELETE: dar de baja lógica
-    @DeleteMapping("/{id}")
-    public ResponseEntity<BajaResponse> bajaLogicaOdontologo(@PathVariable Long id) {
-        Odontologo odontologo = odontologoServicio.buscarOdontologoPorId(id);
-        if (odontologo == null) {
-            return ResponseEntity.notFound().build();
+  @DeleteMapping("/{id}")
+    public ResponseEntity<?> quitarRolOdontologo(@PathVariable Long id) { 
+        try {
+            odontologoServicio.quitarRolYOdontologo(id); 
+            return ResponseEntity.noContent().build(); 
+
+        } catch (RuntimeException e) {
+            logger.error("Error al quitar rol odontólogo con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.notFound().build(); 
+        } catch (Exception e) {
+             logger.error("Error inesperado al quitar rol odontólogo con ID {}: {}", id, e.getMessage());
+             return ResponseEntity.internalServerError().body("Error al procesar la solicitud");
         }
-
-        odontologo.getPersona().setIsActive("Inactivo");
-        odontologoServicio.guardarOdontologo(odontologo);
-
-        // Recargar odontologo con datos actualizados
-        Odontologo odontologoActualizado = odontologoServicio.buscarOdontologoPorId(id);
-        OdontologoResponse response = convertirAResponse(odontologoActualizado);
-
-        BajaResponse bajaResponse = new BajaResponse(
-                "Odontólogo dado de baja lógicamente",
-                response);
-
-        return ResponseEntity.ok(bajaResponse);
     }
 
     // Método auxiliar: convertir Odontologo a OdontologoResponse
@@ -141,4 +148,19 @@ public class OdontologoController {
                 persona.getTelefono(),
                 persona.getIsActive());
     }
+
+    @PostMapping("/asignar")
+public ResponseEntity<OdontologoResponse> asignarRolOdontologo(@RequestBody AsignarOdontologoRequest request) {
+    try {
+        Odontologo nuevoOdontologo = odontologoServicio.asignarRolOdontologo(
+            request.getIdPersona(), 
+            request.getEspecialidadesIds()
+        );
+        
+        OdontologoResponse dto = convertirAResponse(nuevoOdontologo);
+        return ResponseEntity.status(201).body(dto);
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(null); // O un DTO de error
+    }
+}
 }

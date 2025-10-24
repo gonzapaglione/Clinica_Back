@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import com.clinica.clinica_coc.services.PersonaServicio;
@@ -34,6 +35,9 @@ public class PersonaController {
 
     @Autowired
     private RolRepositorio rolRepositorio;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // GET: listar todas las personas con roles
     @GetMapping
@@ -72,7 +76,7 @@ public class PersonaController {
         persona.setApellido(request.getApellido());
         persona.setDni(request.getDni());
         persona.setEmail(request.getEmail());
-        persona.setPassword(request.getPassword());
+        persona.setPassword(passwordEncoder.encode(request.getPassword()));
         persona.setDomicilio(request.getDomicilio());
         persona.setTelefono(request.getTelefono());
         persona.setIsActive(request.getIsActive() != null ? request.getIsActive() : "Activo");
@@ -119,7 +123,7 @@ public class PersonaController {
         persona.setDni(request.getDni());
         persona.setEmail(request.getEmail());
         if (request.getPassword() != null) {
-            persona.setPassword(request.getPassword());
+            persona.setPassword(passwordEncoder.encode(request.getPassword()));
         }
         persona.setDomicilio(request.getDomicilio());
         persona.setTelefono(request.getTelefono());

@@ -51,11 +51,9 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         // Permite todos los headers (como Authorization, Content-Type)
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        // Permite credenciales (si usaras cookies, aunque con JWT no es común)
-        // configuration.setAllowCredentials(true); 
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica esto a TODAS las rutas
+        source.registerCorsConfiguration("/**", configuration); 
         return source;
     }
 

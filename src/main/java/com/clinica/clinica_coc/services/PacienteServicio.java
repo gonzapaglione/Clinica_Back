@@ -7,11 +7,15 @@ import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.models.PersonaRol;
 import com.clinica.clinica_coc.models.Rol;
+import com.clinica.clinica_coc.repositories.CoberturaSocialRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
 import com.clinica.clinica_coc.repositories.RolRepositorio;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -25,6 +29,12 @@ public class PacienteServicio implements IPacienteServicio {
 
     @Autowired
     private CoberturaSocialServicio coberturaServicio;
+
+    @Autowired
+    private CoberturaSocialRepositorio coberturaSocialRepositorio;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private PersonaRolServicio personaRolServicio;
@@ -62,7 +72,7 @@ public class PacienteServicio implements IPacienteServicio {
         persona.setApellido(personaRequest.getApellido());
         persona.setDni(personaRequest.getDni());
         persona.setEmail(personaRequest.getEmail());
-        persona.setPassword(personaRequest.getPassword());
+        persona.setPassword(passwordEncoder.encode(personaRequest.getPassword()));
         persona.setDomicilio(personaRequest.getDomicilio());
         persona.setTelefono(personaRequest.getTelefono());
         persona.setIsActive("Activo");
@@ -104,20 +114,30 @@ public class PacienteServicio implements IPacienteServicio {
             persona.setTelefono(request.getPersona().getTelefono());
             persona.setDomicilio(request.getPersona().getDomicilio());
             if (request.getPersona().getPassword() != null) {
-                persona.setPassword(request.getPersona().getPassword());
+                persona.setPassword(passwordEncoder.encode(request.getPersona().getPassword()));
             }
             if (request.getPersona().getIsActive() != null) {
                 persona.setIsActive(request.getPersona().getIsActive());
             }
             personaServicio.guardarPersona(persona); // se guarda usando el servicio
         }
+        List<Long> coberturasIds = request.getCoberturasIds(); // Obtén los IDs del request
 
-        // 3. Actualizar coberturas si vienen
-        if (request.getCoberturasIds() != null && !request.getCoberturasIds().isEmpty()) {
-            List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(request.getCoberturasIds());
-            paciente.setCoberturas(coberturas);
+        // Inicializa la lista en el paciente si es null para evitar NullPointerException
+        if (paciente.getCoberturas() == null) {
+            paciente.setCoberturas(new ArrayList<>());
         }
+        
+        // Limpia las coberturas anteriores
+        paciente.getCoberturas().clear(); 
 
+        // Si se proporcionaron nuevos IDs de cobertura...
+        if (coberturasIds != null && !coberturasIds.isEmpty()) {
+            List<CoberturaSocial> nuevasCoberturas = coberturaSocialRepositorio.findAllById(coberturasIds);
+            // Añade las nuevas coberturas a la lista del paciente
+            paciente.getCoberturas().addAll(nuevasCoberturas); 
+        }
+        
         // 4. Guardar paciente
         return pacienteRepositorio.save(paciente);
     }
