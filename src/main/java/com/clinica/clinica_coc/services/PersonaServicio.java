@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PersonaServicio implements IPersonaServicio {
@@ -71,6 +72,14 @@ public class PersonaServicio implements IPersonaServicio {
         }
 
         return personaRepositorio.save(persona);
+    }
+
+    public Optional<Persona> findByEmail(String userEmail) {
+     return personaRepositorio.findByEmail(userEmail);
+    }
+
+    public void save(Persona usuario) {
+        personaRepositorio.save(usuario);
     }
 
 }
