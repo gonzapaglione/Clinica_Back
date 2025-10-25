@@ -1,24 +1,16 @@
 package com.clinica.clinica_coc.controllers;
 
-import com.clinica.clinica_coc.DTO.BajaPacienteResponse;
 import com.clinica.clinica_coc.DTO.BajaResponse;
 import com.clinica.clinica_coc.DTO.PacienteRequest;
 import com.clinica.clinica_coc.DTO.PacienteResponse;
-import com.clinica.clinica_coc.DTO.PersonaDTO;
 import com.clinica.clinica_coc.DTO.PersonaBasicDTO;
-import com.clinica.clinica_coc.DTO.RolDTO;
 import com.clinica.clinica_coc.DTO.CoberturaSocialDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.clinica.clinica_coc.services.PacienteServicio;
-import com.clinica.clinica_coc.services.PersonaServicio;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Persona;
-
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,13 +26,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 @CrossOrigin("http://localhost:5173")
 public class PacienteController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PacienteController.class);
-
     @Autowired
     private PacienteServicio pacienteServicio;
 
-    @Autowired
-    private PersonaServicio personaServicio;
 
     // GET: listar todos
     @GetMapping()
@@ -112,19 +100,13 @@ public class PacienteController {
     }
 
     // DELETE: baja logica paciente
-    @DeleteMapping("/{id}")
+      @DeleteMapping("/{id}")
     public ResponseEntity<BajaResponse> bajaLogicaPaciente(@PathVariable Long id) {
-        Paciente paciente = pacienteServicio.buscarPacientePorId(id);
-        if (paciente == null) {
+        Paciente pacienteActualizado = pacienteServicio.bajaLogicaPaciente(id);
+        if (pacienteActualizado == null) {
             return ResponseEntity.notFound().build();
         }
 
-        Persona persona = paciente.getPersona();
-        persona.setIsActive("Inactivo");
-        personaServicio.guardarPersona(persona);
-
-        // Recargar paciente con datos actualizados
-        Paciente pacienteActualizado = pacienteServicio.buscarPacientePorId(id);
         PacienteResponse response = convertirAResponse(pacienteActualizado);
 
         BajaResponse bajaResponse = new BajaResponse(
@@ -133,6 +115,7 @@ public class PacienteController {
 
         return ResponseEntity.ok(bajaResponse);
     }
+
 
     // Método auxiliar: convertir Paciente a PacienteResponse
     private PacienteResponse convertirAResponse(Paciente paciente) {

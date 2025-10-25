@@ -10,13 +10,10 @@ import com.clinica.clinica_coc.models.Rol;
 import com.clinica.clinica_coc.repositories.CoberturaSocialRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
 import com.clinica.clinica_coc.repositories.RolRepositorio;
-
 import jakarta.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +63,26 @@ public class PacienteServicio implements IPacienteServicio {
     public void eliminarPaciente(Paciente paciente) {
         pacienteRepositorio.delete(paciente);
     }
+
+      @Transactional
+    public Paciente bajaLogicaPaciente(Long idPaciente) {
+        Paciente paciente = pacienteRepositorio.findById(idPaciente)
+                .orElse(null);
+
+        if (paciente == null) {
+            return null;
+        }
+
+        Persona persona = paciente.getPersona();
+        if (persona == null) {
+            throw new RuntimeException("El paciente no tiene una persona asociada.");
+        }
+
+        personaServicio.darBajaPersona(persona);
+
+        return paciente;
+    }
+
 
     public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds) {
         // 1. Crear Persona a partir de PersonaRequest

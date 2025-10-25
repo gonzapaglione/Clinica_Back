@@ -1,8 +1,6 @@
 package com.clinica.clinica_coc.models;
 
 import java.util.List;
-
-import jakarta.annotation.Generated;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
