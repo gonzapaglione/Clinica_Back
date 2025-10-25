@@ -5,12 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import com.clinica.clinica_coc.DTO.OdontologoRequest;
 import com.clinica.clinica_coc.DTO.OdontologoResponse;
 import com.clinica.clinica_coc.DTO.PersonaBasicDTO;
 import com.clinica.clinica_coc.DTO.AsignarOdontologoRequest;
-import com.clinica.clinica_coc.DTO.BajaResponse;
 import com.clinica.clinica_coc.DTO.EspecialidadDTO;
 import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Persona;
