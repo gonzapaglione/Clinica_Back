@@ -9,6 +9,7 @@ import com.clinica.clinica_coc.DTO.OdontologoRequest;
 import com.clinica.clinica_coc.DTO.OdontologoResponse;
 import com.clinica.clinica_coc.DTO.PersonaBasicDTO;
 import com.clinica.clinica_coc.DTO.AsignarOdontologoRequest;
+import com.clinica.clinica_coc.DTO.BajaResponse;
 import com.clinica.clinica_coc.DTO.EspecialidadDTO;
 import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Persona;

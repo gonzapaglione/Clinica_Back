@@ -3,14 +3,10 @@ package com.clinica.clinica_coc.controllers;
 import com.clinica.clinica_coc.DTO.HorarioRequest;
 import com.clinica.clinica_coc.DTO.HorarioResponse;
 import com.clinica.clinica_coc.services.HorarioServicio;
-
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
