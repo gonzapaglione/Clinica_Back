@@ -64,7 +64,7 @@ public class PacienteServicio implements IPacienteServicio {
         pacienteRepositorio.delete(paciente);
     }
 
-      @Transactional
+    @Transactional
     public Paciente bajaLogicaPaciente(Long idPaciente) {
         Paciente paciente = pacienteRepositorio.findById(idPaciente)
                 .orElse(null);
@@ -82,7 +82,6 @@ public class PacienteServicio implements IPacienteServicio {
 
         return paciente;
     }
-
 
     public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds) {
         // 1. Crear Persona a partir de PersonaRequest
