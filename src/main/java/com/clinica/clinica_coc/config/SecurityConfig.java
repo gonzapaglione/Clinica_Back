@@ -32,10 +32,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authRequest -> authRequest
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/coberturas").permitAll()
+                        .requestMatchers("api/especialidades").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/personas/cambiar-password").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/odontologos/persona/**").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.GET, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.POST, "/api/horarios").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.PUT, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.DELETE, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
                         .anyRequest().authenticated())
-                .sessionManagement(sessionManager -> sessionManager
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> 
+            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        )
                 .authenticationProvider(authProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -44,11 +51,8 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite peticiones SÓLO desde tu frontend
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        // Permite los métodos que usas
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // Permite todos los headers (como Authorization, Content-Type)
         configuration.setAllowedHeaders(Arrays.asList("*"));
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
