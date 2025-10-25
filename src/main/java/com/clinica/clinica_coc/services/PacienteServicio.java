@@ -131,28 +131,29 @@ public class PacienteServicio implements IPacienteServicio {
         }
         List<Long> coberturasIds = request.getCoberturasIds(); // Obtén los IDs del request
 
-        // Inicializa la lista en el paciente si es null para evitar NullPointerException
+        // Inicializa la lista en el paciente si es null para evitar
+        // NullPointerException
         if (paciente.getCoberturas() == null) {
             paciente.setCoberturas(new ArrayList<>());
         }
-        
+
         // Limpia las coberturas anteriores
-        paciente.getCoberturas().clear(); 
+        paciente.getCoberturas().clear();
 
         // Si se proporcionaron nuevos IDs de cobertura...
         if (coberturasIds != null && !coberturasIds.isEmpty()) {
             List<CoberturaSocial> nuevasCoberturas = coberturaSocialRepositorio.findAllById(coberturasIds);
             // Añade las nuevas coberturas a la lista del paciente
-            paciente.getCoberturas().addAll(nuevasCoberturas); 
+            paciente.getCoberturas().addAll(nuevasCoberturas);
         }
-        
+
         // 4. Guardar paciente
         return pacienteRepositorio.save(paciente);
     }
 
     public Paciente buscarPacientePorIdPersona(Long idPersona) {
-    return pacienteRepositorio.findByPersonaId(idPersona)
-            .orElse(null);
-        }
+        return pacienteRepositorio.findByPersonaId(idPersona)
+                .orElse(null);
+    }
 
 }

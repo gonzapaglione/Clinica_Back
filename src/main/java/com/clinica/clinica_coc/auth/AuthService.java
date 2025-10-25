@@ -14,7 +14,7 @@ import com.clinica.clinica_coc.models.Rol;
 import com.clinica.clinica_coc.models.PersonaRol;
 import com.clinica.clinica_coc.repositories.PersonaRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
-import com.clinica.clinica_coc.repositories.RolRepositorio; 
+import com.clinica.clinica_coc.repositories.RolRepositorio;
 import com.clinica.clinica_coc.repositories.PersonaRolRepositorio;
 import com.clinica.clinica_coc.services.CoberturaSocialServicio;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class AuthService {
     private final PersonaRepositorio personaRepositorio;
     private final PacienteRepositorio pacienteRepositorio;
     private final CoberturaSocialServicio coberturaServicio;
-    private final RolRepositorio rolRepositorio; 
+    private final RolRepositorio rolRepositorio;
     private final PersonaRolRepositorio personaRolRepositorio;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -39,17 +39,17 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-       UserDetails userDetails = personaRepositorio.findByEmailWithRoles(request.getEmail())
-        .orElseThrow(() -> new RuntimeException("Usuario no encontrado post-autenticación"));
-Persona persona = (Persona) userDetails;
-Map<String, Object> extraClaims = new HashMap<>();
-extraClaims.put("idUsuario", persona.getId_persona());
-extraClaims.put("roles", userDetails.getAuthorities().stream()
-        .map(grantedAuthority -> grantedAuthority.getAuthority())
-        .collect(java.util.stream.Collectors.toList()));
+        UserDetails userDetails = personaRepositorio.findByEmailWithRoles(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado post-autenticación"));
+        Persona persona = (Persona) userDetails;
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("idUsuario", persona.getId_persona());
+        extraClaims.put("roles", userDetails.getAuthorities().stream()
+                .map(grantedAuthority -> grantedAuthority.getAuthority())
+                .collect(java.util.stream.Collectors.toList()));
 
-// 5. Genera el token USANDO los claims
-String token = jwtService.getToken(extraClaims, userDetails);
+        // 5. Genera el token USANDO los claims
+        String token = jwtService.getToken(extraClaims, userDetails);
         return AuthResponse.builder().token(token).build();
     }
 
@@ -73,7 +73,7 @@ String token = jwtService.getToken(extraClaims, userDetails);
         // b. Crear la relación en la tabla persona_rol
         PersonaRol personaRol = new PersonaRol();
         personaRol.setIdPersona(savedPersona); // Vincula a la persona recién creada
-        personaRol.setIdRol(rolPaciente);    // Vincula al rol Paciente
+        personaRol.setIdRol(rolPaciente); // Vincula al rol Paciente
 
         // c. Guardar la relación
         personaRolRepositorio.save(personaRol);

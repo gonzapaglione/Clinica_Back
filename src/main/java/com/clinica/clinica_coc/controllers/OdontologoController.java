@@ -100,19 +100,27 @@ public class OdontologoController {
         return ResponseEntity.ok(dto);
     }
 
-    // DELETE: dar de baja lógica
-  @DeleteMapping("/{id}")
-    public ResponseEntity<?> quitarRolOdontologo(@PathVariable Long id) { 
-        try {
-            odontologoServicio.quitarRolYOdontologo(id); 
-            return ResponseEntity.noContent().build(); 
+    // DELETE: baja lógica (delegada al servicio)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<BajaResponse> quitarRolOdontologo(@PathVariable Long id) {
+        // Verificar existencia previa para devolver 404 si no existe
+        Odontologo existente = odontologoServicio.buscarOdontologoPorId(id);
+        if (existente == null) {
+            logger.warn("Odontólogo con id {} no encontrado para baja lógica", id);
+            return ResponseEntity.notFound().build();
+        }
 
-        } catch (RuntimeException e) {
-            logger.error("Error al quitar rol odontólogo con ID {}: {}", id, e.getMessage());
-            return ResponseEntity.notFound().build(); 
+        try {
+            // Llama al método transaccional que realiza la baja lógica sobre la persona
+            // asociada
+            odontologoServicio.bajaLogicaOdontologo(id);
+
+            BajaResponse response = new BajaResponse("Baja lógica realizada con éxito", id);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-             logger.error("Error inesperado al quitar rol odontólogo con ID {}: {}", id, e.getMessage());
-             return ResponseEntity.internalServerError().body("Error al procesar la solicitud");
+            logger.error("Error al dar de baja lógica al odontólogo con id {}: {}", id, e.getMessage(), e);
+            BajaResponse response = new BajaResponse("Error al procesar la baja lógica: " + e.getMessage(), id);
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -148,17 +156,16 @@ public class OdontologoController {
     }
 
     @PostMapping("/asignar")
-public ResponseEntity<OdontologoResponse> asignarRolOdontologo(@RequestBody AsignarOdontologoRequest request) {
-    try {
-        Odontologo nuevoOdontologo = odontologoServicio.asignarRolOdontologo(
-            request.getIdPersona(), 
-            request.getEspecialidadesIds()
-        );
-        
-        OdontologoResponse dto = convertirAResponse(nuevoOdontologo);
-        return ResponseEntity.status(201).body(dto);
-    } catch (Exception e) {
-        return ResponseEntity.badRequest().body(null); // O un DTO de error
+    public ResponseEntity<OdontologoResponse> asignarRolOdontologo(@RequestBody AsignarOdontologoRequest request) {
+        try {
+            Odontologo nuevoOdontologo = odontologoServicio.asignarRolOdontologo(
+                    request.getIdPersona(),
+                    request.getEspecialidadesIds());
+
+            OdontologoResponse dto = convertirAResponse(nuevoOdontologo);
+            return ResponseEntity.status(201).body(dto);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null); // O un DTO de error
+        }
     }
-}
 }
