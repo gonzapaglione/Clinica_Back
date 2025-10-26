@@ -7,12 +7,13 @@ import java.util.Optional; // Importar
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import com.clinica.clinica_coc.models.Turno;
 
 @Repository
-public interface TurnoRepositorio extends JpaRepository<Turno, Long> {
+public interface TurnoRepositorio extends JpaRepository<Turno, Long>, JpaSpecificationExecutor<Turno> {
 
     @Query("SELECT t FROM Turno t " +
            "LEFT JOIN FETCH t.paciente p " +
