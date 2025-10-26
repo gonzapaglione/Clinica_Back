@@ -32,4 +32,10 @@ public class Odontologo {
 
     @OneToMany(mappedBy = "odontologo")
     private List<EspecialidadOdontologo> especialidadOdontologoList = new ArrayList<>();
+
+ 
+    @Override
+    public String toString(){
+    return "ID Odontologo: "+ id_odontologo;
+ }
 }

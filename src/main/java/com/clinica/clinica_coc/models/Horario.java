@@ -16,7 +16,6 @@ public class Horario {
     @Column(name = "id_horario")
     private Long idHorario;
 
-    // Relación: Muchos horarios pertenecen a un odontólogo
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_odontologo", nullable = false)
     private Odontologo odontologo;
@@ -33,4 +32,9 @@ public class Horario {
 
     @Column(nullable = false)
     private Integer duracionTurno;
+
+    @Override
+    public String toString(){
+        return "[ID Horario: "+ idHorario + "hora inicio: "+horaInicio+" hora fin: "+horaFin  +"]";
+    }
 }

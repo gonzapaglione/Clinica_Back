@@ -26,4 +26,8 @@ public class PersonaRol {
     @ManyToOne(optional = false)
     private Rol idRol;
 
+    @Override
+    public String toString(){
+        return "Id persona_ rol: "+ id_per_rol;
+    }
 }

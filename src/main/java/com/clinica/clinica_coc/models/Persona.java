@@ -85,4 +85,10 @@ public class Persona implements UserDetails {
         return "Activo".equalsIgnoreCase(this.isActive);
     }
 
+    @Override
+public String toString() {
+    // Solo imprime campos locales, NUNCA la lista de roles
+    return "Persona [id=" + id_persona + ", nombre=" + nombre + ", apellido=" + apellido + "]";
+}
+
 }

@@ -2,6 +2,7 @@ package com.clinica.clinica_coc.repositories;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional; // Importar
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,11 +14,38 @@ import com.clinica.clinica_coc.models.Turno;
 @Repository
 public interface TurnoRepositorio extends JpaRepository<Turno, Long> {
 
-    @Query("SELECT t FROM Turno t WHERE t.paciente.id_paciente = :idPaciente")
+    @Query("SELECT t FROM Turno t " +
+           "LEFT JOIN FETCH t.paciente p " +
+           "LEFT JOIN FETCH p.persona " + 
+           "LEFT JOIN FETCH t.odontologo o " +
+           "LEFT JOIN FETCH o.persona " + 
+           "WHERE p.id_paciente = :idPaciente")
     List<Turno> findByPacienteId(@Param("idPaciente") Long idPaciente);
 
     @Query("SELECT t FROM Turno t WHERE t.odontologo.id_odontologo = :idOdontologo")
     List<Turno> findByOdontologoId(@Param("idOdontologo") Long idOdontologo);
 
     List<Turno> findByFechaHoraBetween(LocalDateTime inicio, LocalDateTime fin);
+
+
+    @Query("SELECT t FROM Turno t " +
+           "LEFT JOIN FETCH t.paciente p " +
+           "LEFT JOIN FETCH p.persona " +
+           "LEFT JOIN FETCH t.odontologo o " +
+           "LEFT JOIN FETCH o.persona " +
+           "WHERE t.odontologo.id_odontologo = :idOdontologo AND t.fechaHora BETWEEN :inicio AND :fin " +
+           "ORDER BY t.fechaHora ASC") // Ordenamos los turnos
+    List<Turno> findByOdontologoIdAndFechaHoraBetween(
+            @Param("idOdontologo") Long idOdontologo,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin);
+
+
+    @Query("SELECT t FROM Turno t " +
+           "LEFT JOIN FETCH t.paciente p " +
+           "LEFT JOIN FETCH p.persona " +
+           "LEFT JOIN FETCH t.odontologo o " +
+           "LEFT JOIN FETCH o.persona " +
+           "WHERE t.id_turno = :idTurno")
+    Optional<Turno> findByIdWithDetails(@Param("idTurno") Long idTurno);
 }

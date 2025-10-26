@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/horarios").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.PUT, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.DELETE, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.GET, "/api/turnos/odontologo/**").hasAnyAuthority("Odontologo", "Admin")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> 
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -52,7 +53,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE","PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

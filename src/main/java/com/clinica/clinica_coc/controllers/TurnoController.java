@@ -1,6 +1,7 @@
 package com.clinica.clinica_coc.controllers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,11 +9,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.clinica.clinica_coc.DTO.TurnoRequest;
@@ -52,11 +55,16 @@ public class TurnoController {
     }
 
     @GetMapping("/odontologo/{idOdontologo}")
-    public ResponseEntity<List<TurnoResponse>> listarTurnosPorOdontologo(@PathVariable Long idOdontologo) {
-        List<TurnoResponse> turnos = turnoServicio.listarTurnosPorOdontologo(idOdontologo);
+    public ResponseEntity<List<TurnoResponse>> listarTurnosPorOdontologoYFecha(
+            @PathVariable Long idOdontologo,
+            @RequestParam("fecha") String fecha) {
+
+        List<TurnoResponse> turnos = turnoServicio.listarTurnosPorOdontologoYFecha(idOdontologo, fecha);
+        
         if (turnos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
+        
         return ResponseEntity.ok(turnos);
     }
 
@@ -69,6 +77,15 @@ public class TurnoController {
     @PutMapping("/{id}")
     public ResponseEntity<TurnoResponse> actualizarTurno(@PathVariable Long id, @RequestBody TurnoRequest request) {
         TurnoResponse turnoActualizado = turnoServicio.actualizarTurno(id, request);
+        return ResponseEntity.ok(turnoActualizado);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<TurnoResponse> actualizarParcialmenteTurno(
+            @PathVariable Long id, 
+            @RequestBody Map<String, Object> campos) {
+        
+        TurnoResponse turnoActualizado = turnoServicio.actualizarTurnoParcial(id, campos);
         return ResponseEntity.ok(turnoActualizado);
     }
 
