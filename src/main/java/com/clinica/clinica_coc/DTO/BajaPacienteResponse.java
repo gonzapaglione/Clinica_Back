@@ -10,6 +10,6 @@ public class BajaPacienteResponse {
     private Long idPaciente;
     private String nombre;
     private String apellido;
-    private String estado; // "Activo" o "Inactivo"
+    private String isActive; // "Activo" o "Inactivo"
     private String mensaje; // "Paciente dado de baja lógicamente"
 }

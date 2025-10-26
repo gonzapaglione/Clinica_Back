@@ -1,29 +1,30 @@
 package com.clinica.clinica_coc.controllers;
 
+import com.clinica.clinica_coc.DTO.CambioPasswordDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.clinica.clinica_coc.services.PersonaServicio;
-import com.clinica.clinica_coc.models.Persona;
-
-import java.util.List;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import com.clinica.clinica_coc.services.PersonaServicio;
+import com.clinica.clinica_coc.services.PersonaRolServicio;
+import com.clinica.clinica_coc.DTO.PersonaDTO;
+import com.clinica.clinica_coc.DTO.PersonaRequest;
+import com.clinica.clinica_coc.DTO.RolDTO;
+import com.clinica.clinica_coc.exceptions.ResourceNotFoundException;
+import com.clinica.clinica_coc.models.Persona;
+import com.clinica.clinica_coc.models.PersonaRol;
+import com.clinica.clinica_coc.models.Rol;
+import com.clinica.clinica_coc.repositories.RolRepositorio;
+import java.util.List;
+import java.util.Map;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
-@RequestMapping("/api/personas") // http://localhost:8080/api/personas
-//Conexion con el front
-@CrossOrigin(value = "http://localhost:5173")
-
+@RequestMapping("/api/personas")
+@CrossOrigin("http://localhost:5173")
 public class PersonaController {
 
     private static final Logger logger = LoggerFactory.getLogger(PersonaController.class);
@@ -31,88 +32,202 @@ public class PersonaController {
     @Autowired
     private PersonaServicio personaServicio;
 
-    // GET: listar todas las personas
-    @GetMapping()
-    public ResponseEntity<List<Persona>> listarPersonas() {
+    @Autowired
+    private PersonaRolServicio personaRolServicio;
+
+    @Autowired
+    private RolRepositorio rolRepositorio;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    // GET: listar todas las personas con roles
+    @GetMapping
+    public ResponseEntity<List<PersonaDTO>> listarPersonas() {
         List<Persona> personas = personaServicio.listarPersonas();
 
         if (personas.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 204 No content
+            return ResponseEntity.noContent().build();
         }
 
-        personas.forEach(persona -> logger.info("ID: " + persona.toString()));
-        return ResponseEntity.ok(personas); // 200 OK con la lista
+        List<PersonaDTO> personasDTO = personas.stream().map(this::convertirADTO).toList();
+        return ResponseEntity.ok(personasDTO);
     }
 
-    // GET: listar por id
+    // GET: listar persona por ID con roles
     @GetMapping("/{id}")
-    public ResponseEntity<Persona> listarPersonaPorId(@PathVariable Long id) {
+    public ResponseEntity<PersonaDTO> listarPersonaPorId(@PathVariable Long id) {
         Persona persona = personaServicio.buscarPersonaPorId(id);
 
         if (persona == null) {
-            return ResponseEntity.notFound().build(); // 404 si no existe
+            return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(persona); // 200 OK con la persona
+        PersonaDTO dto = convertirADTO(persona);
+        return ResponseEntity.ok(dto);
     }
 
-    // POST: agregar persona
+    // POST: agregar persona (con roles opcionales)
     @PostMapping
-    public ResponseEntity<Persona> agregarPersona(@RequestBody Persona persona) {
-        logger.info("Persona a agregar: " + persona.toString());
+    public ResponseEntity<PersonaDTO> agregarPersona(@RequestBody PersonaRequest request) {
+        logger.info("Persona a agregar: " + request);
+
+        // 1. Crear y guardar persona
+        Persona persona = new Persona();
+        persona.setNombre(request.getNombre());
+        persona.setApellido(request.getApellido());
+        persona.setDni(request.getDni());
+        persona.setEmail(request.getEmail());
+        persona.setPassword(passwordEncoder.encode(request.getPassword()));
+        persona.setDomicilio(request.getDomicilio());
+        persona.setTelefono(request.getTelefono());
+        persona.setIsActive(request.getIsActive() != null ? request.getIsActive() : "Activo");
+
         Persona nuevaPersona = personaServicio.guardarPersona(persona);
 
         if (nuevaPersona == null) {
-            // Si hubo un error al guardar
             return ResponseEntity.badRequest().build();
         }
 
-        // 201 Created con el objeto creado en el body
-        return ResponseEntity.status(201).body(nuevaPersona);
+        // 2. Asignar roles si vienen (OPCIONAL)
+        if (request.getRolesIds() != null && !request.getRolesIds().isEmpty()) {
+            for (Long rolId : request.getRolesIds()) {
+                Rol rol = rolRepositorio.findById(rolId)
+                        .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + rolId));
+                PersonaRol personaRol = new PersonaRol();
+                personaRol.setIdPersona(nuevaPersona);
+                personaRol.setIdRol(rol);
+                personaRolServicio.guardar(personaRol);
+            }
+        }
+
+        // 3. Recargar persona con roles y convertir a DTO
+        Persona personaConRoles = personaServicio.buscarPersonaPorId(nuevaPersona.getId_persona());
+        PersonaDTO dto = convertirADTO(personaConRoles);
+
+        return ResponseEntity.status(201).body(dto);
     }
 
-    // PUT: editar persona
+    // PUT: editar persona (con roles opcionales)
     @PutMapping("/{id}")
-    public ResponseEntity<Persona> editarPersona(
+    public ResponseEntity<PersonaDTO> editarPersona(
             @PathVariable Long id,
-            @RequestBody Persona personaActualizada) {
+            @RequestBody PersonaRequest request) {
 
-        // Buscar la persona existente
         Persona persona = personaServicio.buscarPersonaPorId(id);
         if (persona == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Actualizar campos
-        persona.setNombre(personaActualizada.getNombre());
-        persona.setApellido(personaActualizada.getApellido());
-        persona.setDni(personaActualizada.getDni());
-        persona.setEmail(personaActualizada.getEmail());
-        persona.setUsername(personaActualizada.getUsername());
-        persona.setPassword(personaActualizada.getPassword());
-        persona.setDomicilio(personaActualizada.getDomicilio());
-        persona.setTelefono(personaActualizada.getTelefono());
+        // 1. Actualizar campos de la persona
+        persona.setNombre(request.getNombre());
+        persona.setApellido(request.getApellido());
+        persona.setDni(request.getDni());
+        persona.setEmail(request.getEmail());
+        if (request.getPassword() != null) {
+            persona.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        persona.setDomicilio(request.getDomicilio());
+        persona.setTelefono(request.getTelefono());
+        if (request.getIsActive() != null) {
+            persona.setIsActive(request.getIsActive());
+        }
 
-        // Guardar cambios
         Persona personaGuardada = personaServicio.guardarPersona(persona);
 
-        return ResponseEntity.ok(personaGuardada);
+        // 2. Actualizar roles si vienen (OPCIONAL)
+        if (request.getRolesIds() != null && !request.getRolesIds().isEmpty()) {
+            // Eliminar roles previos
+            if (personaGuardada.getPersonaRolList() != null && !personaGuardada.getPersonaRolList().isEmpty()) {
+                personaRolServicio.eliminarTodos(personaGuardada.getPersonaRolList());
+                personaGuardada.getPersonaRolList().clear(); // Limpiar la lista en memoria
+            }
+
+            // Asignar nuevos roles
+            for (Long rolId : request.getRolesIds()) {
+                Rol rol = rolRepositorio.findById(rolId)
+                        .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + rolId));
+                PersonaRol personaRol = new PersonaRol();
+                personaRol.setIdPersona(personaGuardada);
+                personaRol.setIdRol(rol);
+                PersonaRol personaRolGuardada = personaRolServicio.guardar(personaRol);
+                personaGuardada.getPersonaRolList().add(personaRolGuardada); // Agregar a la lista en memoria
+            }
+        }
+
+        // 3. Recargar persona con roles actualizados (para asegurar sincronización)
+        Persona personaActualizada = personaServicio.buscarPersonaPorId(personaGuardada.getId_persona());
+        PersonaDTO dto = convertirADTO(personaActualizada);
+
+        return ResponseEntity.ok(dto);
     }
 
-    // DELETE: baja logica
+    // DELETE: baja lógica
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> bajaLogicaPersona(@PathVariable Long id) {
-
+    public ResponseEntity<?> bajaLogicaPersona(@PathVariable Long id) {
         Persona persona = personaServicio.buscarPersonaPorId(id);
         if (persona == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Cambiar estado a Inactivo
         persona.setIsActive("Inactivo");
         personaServicio.guardarPersona(persona);
 
-        return ResponseEntity.ok("Persona dada de baja lógicamente");
+        // Recargar persona actualizada
+        Persona personaActualizada = personaServicio.buscarPersonaPorId(id);
+        PersonaDTO dto = convertirADTO(personaActualizada);
+
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("mensaje", "Persona dada de baja lógicamente");
+        response.put("datos", dto);
+
+        return ResponseEntity.ok(response);
     }
 
+    // Método auxiliar para convertir Persona a PersonaDTO
+    private PersonaDTO convertirADTO(Persona persona) {
+        PersonaDTO dto = new PersonaDTO();
+        dto.setId_persona(persona.getId_persona());
+        dto.setNombre(persona.getNombre());
+        dto.setApellido(persona.getApellido());
+        dto.setDni(persona.getDni());
+        dto.setEmail(persona.getEmail());
+        dto.setPassword(persona.getPassword());
+        dto.setDomicilio(persona.getDomicilio());
+        dto.setTelefono(persona.getTelefono());
+        dto.setIsActive(persona.getIsActive());
+
+        // Roles
+        List<RolDTO> rolesDTO = persona.getPersonaRolList() != null
+                ? persona.getPersonaRolList().stream()
+                        .map(pr -> new RolDTO(pr.getIdRol().getId_rol(), pr.getIdRol().getNombre_rol()))
+                        .toList()
+                : List.of();
+        dto.setRoles(rolesDTO);
+
+        return dto;
+    }
+    
+@PutMapping("/cambiar-password")
+public ResponseEntity<?> cambiarPassword(@RequestBody CambioPasswordDTO dto) {
+
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+    Persona usuario = personaServicio.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
+    
+    if (passwordEncoder.matches(dto.getContraseñaActual(), usuario.getPassword())) {
+        
+        // 3. Si coincide, hashear y guardar la NUEVA contraseña
+        String nuevoHash = passwordEncoder.encode(dto.getNuevaContraseña());
+        usuario.setPassword(nuevoHash);
+        personaServicio.save(usuario); 
+
+        return ResponseEntity.ok("Contraseña actualizada con éxito");
+
+    } else {
+        // 4. Si no coincide, devolver el error
+        return new ResponseEntity<>("La contraseña actual es incorrecta", HttpStatus.UNAUTHORIZED);
+    }
+}
 }
