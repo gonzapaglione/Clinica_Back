@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.clinica.clinica_coc.DTO.TurnoRequest;
 import com.clinica.clinica_coc.DTO.TurnoResponse;
+import com.clinica.clinica_coc.models.Turno;
 import com.clinica.clinica_coc.services.TurnoServicio;
 
 @RestController
@@ -53,6 +54,25 @@ public class TurnoController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(turnos);
+    }
+
+    @GetMapping("/buscarPorMes")
+    public  ResponseEntity<List<TurnoResponse>> buscarTurnosPorCriterios(
+            @RequestParam Long odontologoId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin){ 
+            // Llama al servicio, que ahora se encarga de TODA la conversión
+            List<TurnoResponse> turnosEncontrados = turnoServicio.buscarTurnosPorMes(
+                    odontologoId, fechaInicio, fechaFin
+            );
+            System.out.println("Turnos encontrados: "+ turnosEncontrados.size());
+
+            if (turnosEncontrados.isEmpty()) {
+                return ResponseEntity.noContent().build(); // 204 No Content
+            }
+            
+            // Devolver 200 OK con los turnos
+            return ResponseEntity.ok(turnosEncontrados);
     }
 
     @GetMapping("/{id}")

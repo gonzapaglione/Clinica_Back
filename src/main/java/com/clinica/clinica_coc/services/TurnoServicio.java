@@ -75,6 +75,27 @@ public class TurnoServicio {
                 .collect(Collectors.toList());
     }
 
+    public List<TurnoResponse> buscarTurnosPorMes(
+            Long odontologoId, 
+            LocalDate fechaInicio, 
+            LocalDate fechaFin
+    ) {
+        
+        // Convierte fechas a rango LocalDateTime
+        LocalDateTime inicioRango = fechaInicio.atStartOfDay(); 
+        
+        // (ej. 2025-10-31 -> 2025-10-31T23:59:59.999...)
+        LocalDateTime finRango = fechaFin.atTime(LocalTime.MAX);  
+
+        //  Llamar al repositorio 
+        List<Turno> turnos = turnoRepositorio.findTurnosByMes(
+                odontologoId, inicioRango, finRango
+        );
+        return turnos.stream()
+                .map(this::mapTurnoToResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public TurnoResponse obtenerTurno(Long idTurno) {
         Turno turno = turnoRepositorio.findById(idTurno)
