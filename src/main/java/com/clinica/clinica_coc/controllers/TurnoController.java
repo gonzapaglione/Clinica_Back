@@ -39,6 +39,15 @@ public class TurnoController {
         return ResponseEntity.ok(turnos);
     }
 
+    @GetMapping("/futuros")
+    public ResponseEntity<List<TurnoResponse>> listarProximosTurnos() {  //Para listar los turnos con estado proximo
+        List<TurnoResponse> turnos = turnoServicio.listarProximosTurnos();
+        if (turnos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(turnos);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TurnoResponse> obtenerTurno(@PathVariable Long id) {
         TurnoResponse turno = turnoServicio.obtenerTurno(id);

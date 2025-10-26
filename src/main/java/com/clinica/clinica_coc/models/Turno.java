@@ -41,7 +41,7 @@ public class Turno {
     @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
 
-    @Column(name = "estado_turno", length = 10, nullable = false)
+    @Column(name = "estado_turno", length = 20, nullable = false)
     private String estadoTurno;
 
     @Column(name = "motivo_consulta")

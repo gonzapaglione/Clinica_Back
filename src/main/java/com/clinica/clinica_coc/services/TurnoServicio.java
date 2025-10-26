@@ -50,6 +50,13 @@ public class TurnoServicio {
     }
 
     @Transactional(readOnly = true)
+    public List<TurnoResponse> listarProximosTurnos() {  //Lista los turnos con estado proximo para gestion de turnos del admin
+        return turnoRepositorio.findProximosTurnos().stream()
+                .map(this::mapTurnoToResponse) 
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public TurnoResponse obtenerTurno(Long idTurno) {
         Turno turno = turnoRepositorio.findById(idTurno)
                 .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + idTurno));
@@ -185,9 +192,9 @@ private com.clinica.clinica_coc.models.DiaSemana convertirDiaJavaAEnum(java.time
         if (estadoNormalizado.isEmpty()) {
             estadoNormalizado = "Pendiente";
         }
-        if (estadoNormalizado.length() > 10) {
+        if (estadoNormalizado.length() > 20) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El estado del turno no puede superar los 10 caracteres");
+                    "El estado del turno no puede superar los 20 caracteres");
         }
         return estadoNormalizado;
     }

@@ -39,7 +39,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/horarios").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.PUT, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.DELETE, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.GET, "/api/turnos/odontologo/**").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.GET, "api/turnos/**").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.POST, "api/paciente").hasAnyAuthority("Admin")
+                        .requestMatchers(HttpMethod.POST, "api/personas").hasAnyAuthority("Admin")
+                        .requestMatchers(HttpMethod.GET, "api/personas").hasAnyAuthority("Admin")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> 
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

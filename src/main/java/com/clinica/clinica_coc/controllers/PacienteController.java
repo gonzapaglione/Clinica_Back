@@ -75,6 +75,7 @@ public class PacienteController {
     @PostMapping()
     public ResponseEntity<PacienteResponse> agregarPaciente(@RequestBody PacienteRequest request) {
 
+        System.out.println("Persona a agregar: "+request.getPersona());
         Paciente pacienteGuardado = pacienteServicio.crearPacienteConPersonaYRol(
                 request.getPersona(),
                 request.getCoberturasIds());

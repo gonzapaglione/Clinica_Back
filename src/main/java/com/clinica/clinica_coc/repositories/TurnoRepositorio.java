@@ -48,4 +48,13 @@ public interface TurnoRepositorio extends JpaRepository<Turno, Long> {
            "LEFT JOIN FETCH o.persona " +
            "WHERE t.id_turno = :idTurno")
     Optional<Turno> findByIdWithDetails(@Param("idTurno") Long idTurno);
+
+    @Query("SELECT t FROM Turno t " +
+           "LEFT JOIN FETCH t.paciente p " +
+           "LEFT JOIN FETCH p.persona " + 
+           "LEFT JOIN FETCH t.odontologo o " +
+           "LEFT JOIN FETCH o.persona " + 
+           "WHERE t.estadoTurno = 'PROXIMO' " + 
+           "ORDER BY t.fechaHora ASC")
+    List<Turno> findProximosTurnos();
 }
