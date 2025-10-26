@@ -34,6 +34,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/coberturas").permitAll()
                         .requestMatchers("api/especialidades").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/personas/cambiar-password").authenticated()
+                        .requestMatchers(HttpMethod.GET, "api/pacientes/persona/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "api/turnos/paciente/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/odontologos/persona/**").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.GET, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.POST, "/api/horarios").hasAnyAuthority("Odontologo", "Admin")
