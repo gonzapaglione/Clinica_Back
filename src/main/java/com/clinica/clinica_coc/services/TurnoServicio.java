@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,7 @@ import com.clinica.clinica_coc.repositories.HorarioRepositorio;
 import com.clinica.clinica_coc.repositories.OdontologoRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
 import com.clinica.clinica_coc.repositories.TurnoRepositorio;
+import com.clinica.clinica_coc.repositories.TurnoSpecification;
 
 @Service
 public class TurnoServicio {
@@ -50,9 +53,46 @@ public class TurnoServicio {
     }
 
     @Transactional(readOnly = true)
-    public List<TurnoResponse> listarProximosTurnos() {  //Lista los turnos con estado proximo para gestion de turnos del admin
-        return turnoRepositorio.findProximosTurnos().stream()
-                .map(this::mapTurnoToResponse) 
+    public List<TurnoResponse> buscarTurnosConFiltros(
+            String pacienteNombre,
+            LocalDate fechaInicio,
+            LocalDate fechaFin,
+            List<String> estados,
+            Long odontologoId) {
+
+        // 1. Construimos la especificación dinámica 
+        Specification<Turno> spec = TurnoSpecification.build(pacienteNombre, fechaInicio, fechaFin, estados, odontologoId);
+
+        // 2. Definimos el orden: siempre por fecha ascendente
+        Sort sort = Sort.by(Sort.Direction.ASC, "fechaHora");
+
+        // 3. Ejecutamos la consulta
+        List<Turno> turnos = turnoRepositorio.findAll(spec, sort);
+
+        // 4. Mapeamos a DTO
+        return turnos.stream()
+                .map(this::mapTurnoToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<TurnoResponse> buscarTurnosPorMes(
+            Long odontologoId, 
+            LocalDate fechaInicio, 
+            LocalDate fechaFin
+    ) {
+        
+        // Convierte fechas a rango LocalDateTime
+        LocalDateTime inicioRango = fechaInicio.atStartOfDay(); 
+        
+        // (ej. 2025-10-31 -> 2025-10-31T23:59:59.999...)
+        LocalDateTime finRango = fechaFin.atTime(LocalTime.MAX);  
+
+        //  Llamar al repositorio 
+        List<Turno> turnos = turnoRepositorio.findTurnosByMes(
+                odontologoId, inicioRango, finRango
+        );
+        return turnos.stream()
+                .map(this::mapTurnoToResponse)
                 .collect(Collectors.toList());
     }
 

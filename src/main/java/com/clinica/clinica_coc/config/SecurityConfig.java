@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.DELETE, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.GET, "api/turnos/**").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.GET, "api/turnos/buscar").hasAnyAuthority("Odontologo", "Admin")
+                        .requestMatchers(HttpMethod.GET, "api/turnos/buscarPorMes").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.POST, "api/paciente").hasAnyAuthority("Admin")
                         .requestMatchers(HttpMethod.POST, "api/personas").hasAnyAuthority("Admin")
                         .requestMatchers(HttpMethod.GET, "api/personas").hasAnyAuthority("Admin")

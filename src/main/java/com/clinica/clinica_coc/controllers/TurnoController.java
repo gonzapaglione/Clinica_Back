@@ -1,9 +1,10 @@
 package com.clinica.clinica_coc.controllers;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -17,9 +18,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.clinica.clinica_coc.DTO.TurnoRequest;
 import com.clinica.clinica_coc.DTO.TurnoResponse;
+import com.clinica.clinica_coc.models.Turno;
 import com.clinica.clinica_coc.services.TurnoServicio;
 
 @RestController
@@ -39,13 +40,39 @@ public class TurnoController {
         return ResponseEntity.ok(turnos);
     }
 
-    @GetMapping("/futuros")
-    public ResponseEntity<List<TurnoResponse>> listarProximosTurnos() {  //Para listar los turnos con estado proximo
-        List<TurnoResponse> turnos = turnoServicio.listarProximosTurnos();
+@GetMapping("/buscar")
+    public ResponseEntity<List<TurnoResponse>> buscarTurnos(
+            @RequestParam(required = false) String paciente,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) List<String> estados,
+            @RequestParam(required = false) Long odontologoId) {
+
+        List<TurnoResponse> turnos = turnoServicio.buscarTurnosConFiltros(paciente, fechaInicio, fechaFin, estados, odontologoId);
+
         if (turnos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(turnos);
+    }
+
+    @GetMapping("/buscarPorMes")
+    public  ResponseEntity<List<TurnoResponse>> buscarTurnosPorCriterios(
+            @RequestParam Long odontologoId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin){ 
+            // Llama al servicio, que ahora se encarga de TODA la conversión
+            List<TurnoResponse> turnosEncontrados = turnoServicio.buscarTurnosPorMes(
+                    odontologoId, fechaInicio, fechaFin
+            );
+            System.out.println("Turnos encontrados: "+ turnosEncontrados.size());
+
+            if (turnosEncontrados.isEmpty()) {
+                return ResponseEntity.noContent().build(); // 204 No Content
+            }
+            
+            // Devolver 200 OK con los turnos
+            return ResponseEntity.ok(turnosEncontrados);
     }
 
     @GetMapping("/{id}")
