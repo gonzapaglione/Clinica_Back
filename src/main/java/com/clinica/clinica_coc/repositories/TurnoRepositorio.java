@@ -35,7 +35,7 @@ public interface TurnoRepositorio extends JpaRepository<Turno, Long>, JpaSpecifi
            "LEFT JOIN FETCH t.odontologo o " +
            "LEFT JOIN FETCH o.persona " +
            "WHERE t.odontologo.id_odontologo = :idOdontologo AND t.fechaHora BETWEEN :inicio AND :fin " +
-           "ORDER BY t.fechaHora ASC") // Ordenamos los turnos
+           "ORDER BY t.fechaHora ASC") 
     List<Turno> findByOdontologoIdAndFechaHoraBetween(
             @Param("idOdontologo") Long idOdontologo,
             @Param("inicio") LocalDateTime inicio,

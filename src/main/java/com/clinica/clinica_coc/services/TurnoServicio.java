@@ -58,13 +58,17 @@ public class TurnoServicio {
             LocalDate fechaInicio,
             LocalDate fechaFin,
             List<String> estados,
-            Long odontologoId) {
+            Long odontologoId,
+            String orden) {
 
         // 1. Construimos la especificación dinámica 
         Specification<Turno> spec = TurnoSpecification.build(pacienteNombre, fechaInicio, fechaFin, estados, odontologoId);
 
-        // 2. Definimos el orden: siempre por fecha ascendente
-        Sort sort = Sort.by(Sort.Direction.ASC, "fechaHora");
+        // 2. Definimos el orden
+        Sort.Direction direction = "ASC".equalsIgnoreCase(orden)
+                                ? Sort.Direction.ASC
+                                : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, "fechaHora");
 
         // 3. Ejecutamos la consulta
         List<Turno> turnos = turnoRepositorio.findAll(spec, sort);

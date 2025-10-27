@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.clinica.clinica_coc.DTO.TurnoRequest;
 import com.clinica.clinica_coc.DTO.TurnoResponse;
-import com.clinica.clinica_coc.models.Turno;
 import com.clinica.clinica_coc.services.TurnoServicio;
 
 @RestController
@@ -46,9 +45,10 @@ public class TurnoController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) List<String> estados,
-            @RequestParam(required = false) Long odontologoId) {
+            @RequestParam(required = false) Long odontologoId,
+            @RequestParam(required = false, defaultValue = "DESC") String orden) {
 
-        List<TurnoResponse> turnos = turnoServicio.buscarTurnosConFiltros(paciente, fechaInicio, fechaFin, estados, odontologoId);
+        List<TurnoResponse> turnos = turnoServicio.buscarTurnosConFiltros(paciente, fechaInicio, fechaFin, estados, odontologoId, orden);
 
         if (turnos.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -60,8 +60,9 @@ public class TurnoController {
     public  ResponseEntity<List<TurnoResponse>> buscarTurnosPorCriterios(
             @RequestParam Long odontologoId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin){ 
-            // Llama al servicio, que ahora se encarga de TODA la conversión
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            ){ 
+            
             List<TurnoResponse> turnosEncontrados = turnoServicio.buscarTurnosPorMes(
                     odontologoId, fechaInicio, fechaFin
             );
