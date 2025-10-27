@@ -1,7 +1,6 @@
 package com.clinica.clinica_coc.DTO;
 
 import java.time.LocalDateTime;
-
 import com.clinica.clinica_coc.models.MotivoConsultaEnum;
 
 import lombok.AllArgsConstructor;

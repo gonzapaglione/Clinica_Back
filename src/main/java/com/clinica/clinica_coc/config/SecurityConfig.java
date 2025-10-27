@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "api/turnos/buscarPorMes").hasAnyAuthority("Odontologo", "Admin")
                         .requestMatchers(HttpMethod.POST, "api/paciente").hasAnyAuthority("Admin")
                         .requestMatchers(HttpMethod.POST, "api/personas").hasAnyAuthority("Admin")
+                        .requestMatchers(HttpMethod.PUT, "api/personas").hasAnyAuthority("Admin")
                         .requestMatchers(HttpMethod.GET, "api/personas").hasAnyAuthority("Admin")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> 

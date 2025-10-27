@@ -114,7 +114,7 @@ public class OdontologoController {
         try {
             // Llama al método transaccional que realiza la baja lógica sobre la persona
             // asociada
-            odontologoServicio.bajaLogicaOdontologo(id);
+           odontologoServicio.quitarRolYOdontologo(id);
 
             BajaResponse response = new BajaResponse("Baja lógica realizada con éxito", id);
             return ResponseEntity.ok(response);
