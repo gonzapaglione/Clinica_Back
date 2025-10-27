@@ -21,6 +21,7 @@ import com.clinica.clinica_coc.DTO.TurnoRequest;
 import com.clinica.clinica_coc.DTO.TurnoResponse;
 import com.clinica.clinica_coc.exceptions.ResourceNotFoundException;
 import com.clinica.clinica_coc.models.Horario;
+import com.clinica.clinica_coc.models.MotivoConsultaEnum;
 import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Turno;
@@ -321,13 +322,16 @@ private TurnoResponse mapTurnoToResponse(Turno turno, List<Horario> horariosDelO
     }
     System.out.println("DEBUG: Duración asignada: " + duracionMinutos);
     System.out.println("--- FIN MAPEO ---");
+
+    MotivoConsultaEnum motivoEnum = turno.getMotivoConsulta();
+    String motivoDescripcion = (motivoEnum != null) ? motivoEnum.getDescripcion() : null;
     
     LocalDateTime fechaHoraFin = fechaHoraInicio.plusMinutes(duracionMinutos); 
     return TurnoResponse.builder()
             .id_turno(turno.getId_turno())
             .paciente(pacienteDTO)
             .odontologo(odontologoDTO)
-            .motivoConsulta(turno.getMotivoConsulta())
+            .motivoConsulta(motivoDescripcion)
             .estadoTurno(turno.getEstadoTurno())
             .fecha(fechaHoraInicio.toLocalDate())
             .horaInicio(fechaHoraInicio.toLocalTime())
@@ -355,7 +359,11 @@ private TurnoResponse mapTurnoToResponse(Turno turno, List<Horario> horariosDelO
                     turno.setEvolucion((String) value);
                     break;
                 case "motivoConsulta":
-                    turno.setMotivoConsulta((String) value);
+                    if (value != null) {
+                        turno.setMotivoConsulta(MotivoConsultaEnum.valueOf((String) value));
+                    } else {
+                        turno.setMotivoConsulta(null);
+                    }
                     break;
                 case "fechaHora":
                     turno.setFechaHora(LocalDateTime.parse((String) value)); 
