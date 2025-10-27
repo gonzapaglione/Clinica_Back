@@ -2,6 +2,7 @@ package com.clinica.clinica_coc.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,6 +34,9 @@ public class Paciente {
     @OneToOne
     @JoinColumn(name = "id_persona", nullable = false)
     private Persona persona;
+
+    @Column(name = "estado_paciente")
+    private String estado_paciente;
 
     // Relación ManyToMany con cobertura social
     @ManyToMany

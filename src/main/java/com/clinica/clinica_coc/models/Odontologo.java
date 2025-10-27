@@ -2,7 +2,7 @@ package com.clinica.clinica_coc.models;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -33,6 +33,8 @@ public class Odontologo {
     @OneToMany(mappedBy = "odontologo")
     private List<EspecialidadOdontologo> especialidadOdontologoList = new ArrayList<>();
 
+    @Column(name = "estado_odont")
+    private String estado_odont;
  
     @Override
     public String toString(){
