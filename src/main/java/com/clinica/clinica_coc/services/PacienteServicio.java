@@ -102,6 +102,7 @@ public class PacienteServicio implements IPacienteServicio {
         return paciente;
     }
 
+
     public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds, String estadoPaciente) {
         // 1. Crear Persona a partir de PersonaRequest
         Persona persona = new Persona();
@@ -154,6 +155,7 @@ public class PacienteServicio implements IPacienteServicio {
             personaServicio.editarPersona(persona.getId_persona(), request.getPersona());
         }
         List<Long> coberturasIds = request.getCoberturasIds(); // Obtén los IDs del request
+        paciente.setEstado_paciente(request.getEstado_paciente());
 
         // Inicializa la lista en el paciente si es null para evitar
         // NullPointerException
@@ -178,6 +180,12 @@ public class PacienteServicio implements IPacienteServicio {
     public Paciente buscarPacientePorIdPersona(Long idPersona) {
         return pacienteRepositorio.findByPersonaId(idPersona)
                 .orElse(null);
+    }
+
+    @Override
+    public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'crearPacienteConPersonaYRol'");
     }
 
 }

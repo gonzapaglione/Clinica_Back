@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PacienteRequest {
-
     private PersonaRequest persona;
     private List<Long> coberturasIds;
+    private String estado_paciente;
 }

@@ -12,4 +12,5 @@ import java.util.List;
 public class OdontologoRequest {
     private PersonaRequest persona;
     private List<Long> especialidadesIds;
+    private String estado_odont;
 }

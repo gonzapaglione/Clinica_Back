@@ -77,7 +77,8 @@ public class PacienteController {
         System.out.println("Persona a agregar: " + request.getPersona());
         Paciente pacienteGuardado = pacienteServicio.crearPacienteConPersonaYRol(
                 request.getPersona(),
-                request.getCoberturasIds());
+                request.getCoberturasIds(),
+                request.getEstado_paciente());
 
         PacienteResponse response = convertirAResponse(pacienteGuardado);
         return ResponseEntity.status(201).body(response);

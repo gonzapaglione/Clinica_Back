@@ -154,7 +154,7 @@ public class OdontologoServicio implements IOdontologoServicio {
         return odontologoRepositorio.findByPersonaId(idPersona).orElse(null);
     }
 
-    public Odontologo editarOdontologo(Long id, PersonaRequest personaRequest, List<Long> especialidadesIds) {
+    public Odontologo editarOdontologo(Long id, PersonaRequest personaRequest, List<Long> especialidadesIds, String estado) {
         Odontologo odontologo = odontologoRepositorio.findById(id).orElse(null);
         if (odontologo == null)
             return null;
@@ -164,6 +164,8 @@ public class OdontologoServicio implements IOdontologoServicio {
         if (personaRequest != null) {
             personaServicio.editarPersona(persona.getId_persona(), personaRequest);
         }
+        odontologo.setEstado_odont(estado);
+       
 
         // Actualizar especialidades si vienen
         if (especialidadesIds != null && !especialidadesIds.isEmpty()) {

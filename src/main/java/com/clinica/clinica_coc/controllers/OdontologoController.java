@@ -91,7 +91,7 @@ public class OdontologoController {
             @RequestBody OdontologoRequest request) {
 
         Odontologo odontologoEditado = odontologoServicio.editarOdontologo(
-                id, request.getPersona(), request.getEspecialidadesIds());
+                id, request.getPersona(), request.getEspecialidadesIds(), request.getEstado_odont());
 
         if (odontologoEditado == null) {
             return ResponseEntity.notFound().build();
