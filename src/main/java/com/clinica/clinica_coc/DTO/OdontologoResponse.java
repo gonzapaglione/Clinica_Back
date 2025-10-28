@@ -13,4 +13,5 @@ public class OdontologoResponse {
     private Long id_odontologo;
     private PersonaBasicDTO persona;
     private List<EspecialidadDTO> especialidades;
+    private String estado_odont;
 }

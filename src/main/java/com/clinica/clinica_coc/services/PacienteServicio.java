@@ -24,6 +24,9 @@ public class PacienteServicio implements IPacienteServicio {
     private PacienteRepositorio pacienteRepositorio;
 
     @Autowired
+    private com.clinica.clinica_coc.repositories.PersonaRolRepositorio personaRolRepositorio;
+
+    @Autowired
     private PersonaServicio personaServicio;
 
     @Autowired
@@ -78,12 +81,28 @@ public class PacienteServicio implements IPacienteServicio {
             throw new RuntimeException("El paciente no tiene una persona asociada.");
         }
 
-        personaServicio.darBajaPersona(persona);
+        // Realizar baja lógica sobre el estado del paciente
+        paciente.setEstado_paciente("Inactivo");
+        pacienteRepositorio.save(paciente);
+
+        // Eliminar la tupla persona_rol correspondiente al rol Paciente (id 1L)
+        try {
+            Long idPersona = persona.getId_persona();
+            Long idRolPaciente = 1L; // 1L = Paciente
+            java.util.List<com.clinica.clinica_coc.models.PersonaRol> rolesAEliminar = personaRolRepositorio
+                    .findSpecificRolesForPersona(idPersona, idRolPaciente);
+            if (rolesAEliminar != null && !rolesAEliminar.isEmpty()) {
+                personaRolServicio.eliminarTodos(rolesAEliminar);
+            }
+        } catch (Exception e) {
+            // Registrar/log si es necesario; no interrumpir la baja lógica
+            System.out.println("Advertencia al eliminar persona_rol en baja de paciente: " + e.getMessage());
+        }
 
         return paciente;
     }
 
-    public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds) {
+    public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds, String estadoPaciente) {
         // 1. Crear Persona a partir de PersonaRequest
         Persona persona = new Persona();
         persona.setNombre(personaRequest.getNombre());
@@ -110,6 +129,12 @@ public class PacienteServicio implements IPacienteServicio {
         // 4. Crear paciente
         Paciente paciente = new Paciente();
         paciente.setPersona(persona);
+        // Establecer estado del paciente: si el request trae uno, usarlo; si no, default a Activo
+        if (estadoPaciente != null && !estadoPaciente.trim().isEmpty()) {
+            paciente.setEstado_paciente(estadoPaciente);
+        } else {
+            paciente.setEstado_paciente("Activo");
+        }
         paciente.setCoberturas(coberturas);
 
         return pacienteRepositorio.save(paciente);
