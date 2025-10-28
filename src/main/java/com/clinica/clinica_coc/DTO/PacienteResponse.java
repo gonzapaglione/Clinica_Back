@@ -12,5 +12,6 @@ public class PacienteResponse {
 
     private Long id_paciente;
     private PersonaBasicDTO persona;
+    private String estado_paciente;
     private List<CoberturaSocialDTO> coberturas;
 }

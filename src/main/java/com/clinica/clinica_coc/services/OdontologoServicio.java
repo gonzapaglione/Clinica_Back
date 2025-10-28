@@ -85,11 +85,24 @@ public class OdontologoServicio implements IOdontologoServicio {
             throw new RuntimeException("El odontólogo no tiene una persona asociada.");
         }
 
-        personaServicio.darBajaPersona(persona);
+        // Dar baja lógica al odontólogo
+        odontologo.setEstado_odont("Inactivo");
+        odontologoRepositorio.save(odontologo);
 
-        return odontologoRepositorio.findById(idOdontologo)
-                .orElseThrow(() -> new RuntimeException(
-                        "Odontólogo no encontrado tras la baja lógica con id: " + idOdontologo));
+        // Eliminar la tupla persona_rol correspondiente al rol Odontólogo (id 2L)
+        try {
+            Long idPersona = persona.getId_persona();
+            Long idRolOdontologo = 2L; // 2L = Odontólogo
+            java.util.List<com.clinica.clinica_coc.models.PersonaRol> rolesAEliminar = personaRolRepositorio
+                    .findSpecificRolesForPersona(idPersona, idRolOdontologo);
+            if (rolesAEliminar != null && !rolesAEliminar.isEmpty()) {
+                personaRolServicio.eliminarTodos(rolesAEliminar);
+            }
+        } catch (Exception e) {
+            System.out.println("Advertencia al eliminar persona_rol en baja de odontólogo: " + e.getMessage());
+        }
+
+        return odontologoRepositorio.findById(idOdontologo).orElse(null);
     }
 
     @Override
@@ -117,6 +130,7 @@ public class OdontologoServicio implements IOdontologoServicio {
         // 3. Crear odontólogo
         Odontologo odontologo = new Odontologo();
         odontologo.setPersona(persona);
+        odontologo.setEstado_odont("Activo");
         odontologo = odontologoRepositorio.save(odontologo);
 
         // 4. Asignar especialidades si vienen
@@ -205,6 +219,7 @@ public class OdontologoServicio implements IOdontologoServicio {
         // 5. Crear la entidad Odontologo
         Odontologo odontologo = new Odontologo();
         odontologo.setPersona(persona);
+        odontologo.setEstado_odont("Activo");
         odontologo = odontologoRepositorio.save(odontologo);
 
         // 6. Asignar especialidades (lógica copiada de tu otro método)

@@ -112,11 +112,15 @@ public class OdontologoController {
         }
 
         try {
-            // Llama al método transaccional que realiza la baja lógica sobre la persona
-            // asociada
-           odontologoServicio.quitarRolYOdontologo(id);
+            // Llama al método que realiza la baja lógica: set Estado Odontologo = Inactivo
+            // + eliminar persona_rol
+            Odontologo odontActualizado = odontologoServicio.bajaLogicaOdontologo(id);
+            if (odontActualizado == null) {
+                return ResponseEntity.notFound().build();
+            }
 
-            BajaResponse response = new BajaResponse("Baja lógica realizada con éxito", id);
+            OdontologoResponse dto = convertirAResponse(odontActualizado);
+            BajaResponse response = new BajaResponse("Odontólogo dado de baja lógicamente", dto);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error al dar de baja lógica al odontólogo con id {}: {}", id, e.getMessage(), e);
@@ -140,7 +144,8 @@ public class OdontologoController {
         return new OdontologoResponse(
                 odontologo.getId_odontologo(),
                 personaDTO,
-                especialidadesDTO);
+                especialidadesDTO,
+                odontologo.getEstado_odont());
     }
 
     // Método auxiliar para convertir Persona a PersonaBasicDTO (sin roles)
