@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/especialidades").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/personas/cambiar-password").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/pacientes/persona/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/pacientes/persona/**").hasAnyAuthority("Paciente")
                         .requestMatchers(HttpMethod.GET, "/api/turnos/paciente/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/odontologos/persona/**")
                         .hasAnyAuthority("Odontologo", "Admin")
@@ -50,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/personas").hasAnyAuthority("Admin")
                         .requestMatchers(HttpMethod.PUT, "/api/personas").hasAnyAuthority("Admin")
                         .requestMatchers(HttpMethod.GET, "/api/personas").hasAnyAuthority("Admin")
+                        .requestMatchers(HttpMethod.POST, "/api/turnos").hasAnyAuthority("Paciente")
+
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider)
