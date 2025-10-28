@@ -14,6 +14,7 @@ import com.clinica.clinica_coc.DTO.EspecialidadDTO;
 import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.services.OdontologoServicio;
+import com.clinica.clinica_coc.services.TurnoServicio;
 
 import java.util.List;
 
@@ -26,6 +27,9 @@ public class OdontologoController {
 
     @Autowired
     private OdontologoServicio odontologoServicio;
+
+    @Autowired
+    private TurnoServicio turnoServicio;
 
     // GET: listar todos los odontólogos
     @GetMapping
@@ -66,6 +70,14 @@ public class OdontologoController {
 
         OdontologoResponse dto = convertirAResponse(odontologo);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{id}/horarios-disponibles")
+    public ResponseEntity<List<String>> obtenerHorariosDisponibles(
+            @PathVariable Long id,
+            @RequestParam("fecha") String fecha) {
+        List<String> horariosDisponibles = turnoServicio.obtenerHorariosDisponibles(id, fecha);
+        return ResponseEntity.ok(horariosDisponibles);
     }
 
     // POST: crear nuevo odontólogo
