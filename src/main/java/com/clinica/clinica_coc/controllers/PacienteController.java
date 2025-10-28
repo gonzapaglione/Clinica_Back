@@ -29,7 +29,6 @@ public class PacienteController {
     @Autowired
     private PacienteServicio pacienteServicio;
 
-
     // GET: listar todos
     @GetMapping()
     public ResponseEntity<List<PacienteResponse>> listarPacientes() {
@@ -75,7 +74,7 @@ public class PacienteController {
     @PostMapping()
     public ResponseEntity<PacienteResponse> agregarPaciente(@RequestBody PacienteRequest request) {
 
-        System.out.println("Persona a agregar: "+request.getPersona());
+        System.out.println("Persona a agregar: " + request.getPersona());
         Paciente pacienteGuardado = pacienteServicio.crearPacienteConPersonaYRol(
                 request.getPersona(),
                 request.getCoberturasIds());
@@ -101,7 +100,7 @@ public class PacienteController {
     }
 
     // DELETE: baja logica paciente
-      @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<BajaResponse> bajaLogicaPaciente(@PathVariable Long id) {
         Paciente pacienteActualizado = pacienteServicio.bajaLogicaPaciente(id);
         if (pacienteActualizado == null) {
@@ -117,7 +116,6 @@ public class PacienteController {
         return ResponseEntity.ok(bajaResponse);
     }
 
-
     // Método auxiliar: convertir Paciente a PacienteResponse
     private PacienteResponse convertirAResponse(Paciente paciente) {
         PersonaBasicDTO personaDTO = convertirPersonaABasicDTO(paciente.getPersona());
@@ -131,6 +129,7 @@ public class PacienteController {
         return new PacienteResponse(
                 paciente.getId_paciente(),
                 personaDTO,
+                paciente.getEstado_paciente(),
                 coberturasDTO);
     }
 
