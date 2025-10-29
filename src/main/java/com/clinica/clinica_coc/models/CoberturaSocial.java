@@ -23,6 +23,9 @@ public class CoberturaSocial {
 
     private String nombre_cobertura;
 
+   @Column(name = "estado_cobertura", nullable = false, length = 20)
+    private String estado_cobertura;
+
     // Relación inversa ManyToMany con Paciente
     @ManyToMany(mappedBy = "coberturas")
     private List<Paciente> pacientes;

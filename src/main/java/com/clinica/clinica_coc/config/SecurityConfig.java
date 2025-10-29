@@ -36,7 +36,7 @@ public class SecurityConfig {
 
                         // 1. Rutas Públicas
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/api/coberturas").permitAll()
+                        .requestMatchers("/api/coberturas/activas").permitAll()
                         .requestMatchers("/api/especialidades").permitAll()
 
                         // 2. Todas las demás rutas requieren autenticación

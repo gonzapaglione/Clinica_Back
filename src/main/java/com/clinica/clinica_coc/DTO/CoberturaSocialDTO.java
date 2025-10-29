@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class CoberturaSocialDTO {
     private Long id_cob_social;
     private String nombre_cobertura;
+    private String estado_cobertura;
 }

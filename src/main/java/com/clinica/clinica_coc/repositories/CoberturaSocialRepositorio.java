@@ -1,6 +1,7 @@
 
 package com.clinica.clinica_coc.repositories;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +17,8 @@ public interface CoberturaSocialRepositorio extends JpaRepository<CoberturaSocia
 
 @Query(value = "SELECT * FROM cob_social WHERE nombre_cobertura = :nombreBusqueda", nativeQuery = true)
     Optional<CoberturaSocial> findByNombreNativoConParam(@Param("nombreBusqueda") String nombre);    
+
+    
+   @Query("SELECT c FROM CoberturaSocial c WHERE c.estado_cobertura = :estado")
+List<CoberturaSocial> findByEstadoCobertura(@Param("estado") String estado);
 }

@@ -100,6 +100,7 @@ public class AuthService {
             permisos.add("PERM_VER_INICIO_ADMIN");
             permisos.add("PERM_GESTIONAR_PERSONAS");
             permisos.add("PERM_GESTIONAR_ESPECIALIDADES");
+            permisos.add("PERM_GESTIONAR_COBERTURAS");
             permisos.add("PERM_GESTIONAR_HORARIOS_ADMIN");
             permisos.add("PERM_GESTIONAR_TURNOS_ADMIN");
             permisos.add("PERM_GESTIONAR_HISTORIAS_CLINICAS_ADMIN");

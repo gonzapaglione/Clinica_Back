@@ -134,7 +134,7 @@ public class PacienteController {
 
         List<CoberturaSocialDTO> coberturasDTO = paciente.getCoberturas() != null
                 ? paciente.getCoberturas().stream()
-                        .map(c -> new CoberturaSocialDTO(c.getId_cob_social(), c.getNombre_cobertura()))
+                        .map(c -> new CoberturaSocialDTO(c.getId_cob_social(), c.getNombre_cobertura(), c.getEstado_cobertura()))
                         .toList()
                 : List.of();
 
