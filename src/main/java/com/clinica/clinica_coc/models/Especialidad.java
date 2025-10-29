@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,5 +20,9 @@ public class Especialidad {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id_especialidad;
 
+    
     private String nombre;
+
+    @Column(name = "estado_especialidad")
+    private String estado_especialidad;
 }

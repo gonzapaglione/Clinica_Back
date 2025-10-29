@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class EspecialidadDTO {
     private Long idEspecialidad;
     private String nombreEspecialidad;
+    private String estado_especialidad;
 }

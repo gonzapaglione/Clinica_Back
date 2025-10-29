@@ -93,6 +93,7 @@ public class OdontologoController {
     }
 
     @GetMapping("/{id}/horarios-disponibles")
+    @PreAuthorize("hasAnyAuthority('PERM_RESERVAR_TURNO', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD')")
     public ResponseEntity<List<String>> obtenerHorariosDisponibles(
             @PathVariable Long id,
             @RequestParam("fecha") String fecha) {
@@ -172,7 +173,8 @@ public class OdontologoController {
                 ? odontologo.getEspecialidadOdontologoList().stream()
                         .map(eo -> new EspecialidadDTO(
                                 eo.getEspecialidad().getId_especialidad(),
-                                eo.getEspecialidad().getNombre()))
+                                eo.getEspecialidad().getNombre(),
+                                eo.getEspecialidad().getEstado_especialidad()))
                         .toList()
                 : List.of();
 

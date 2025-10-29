@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -29,4 +30,6 @@ public class EspecialidadOdontologo {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_especialidad", nullable = false)
     private Especialidad especialidad;
+
+
 }
