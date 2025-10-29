@@ -8,12 +8,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.models.Paciente;
+import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.jwt.JwtService;
 import com.clinica.clinica_coc.models.CoberturaSocial;
 import com.clinica.clinica_coc.models.Rol;
 import com.clinica.clinica_coc.models.PersonaRol;
 import com.clinica.clinica_coc.repositories.PersonaRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
+import com.clinica.clinica_coc.repositories.OdontologoRepositorio; 
 import com.clinica.clinica_coc.repositories.RolRepositorio;
 import com.clinica.clinica_coc.repositories.PersonaRolRepositorio;
 import com.clinica.clinica_coc.services.CoberturaSocialServicio;
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet; 
+import java.util.Set; 
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final PersonaRepositorio personaRepositorio;
     private final PacienteRepositorio pacienteRepositorio;
+    private final OdontologoRepositorio odontologoRepositorio; 
     private final CoberturaSocialServicio coberturaServicio;
     private final RolRepositorio rolRepositorio;
     private final PersonaRolRepositorio personaRolRepositorio;
@@ -39,24 +44,86 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        
+        // Cargar la Persona
         UserDetails userDetails = personaRepositorio.findByEmailWithRoles(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado post-autenticación"));
         Persona persona = (Persona) userDetails;
-        Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("idUsuario", persona.getId_persona());
-        extraClaims.put("roles", userDetails.getAuthorities().stream()
-                .map(grantedAuthority -> grantedAuthority.getAuthority())
-                .collect(java.util.stream.Collectors.toList()));
 
-        // 5. Genera el token USANDO los claims
+        
+        //  Preparar el Set de permisos
+        Set<String> permisos = new HashSet<>();
+
+        //  Obtener los roles "entidad" (Paciente, Odontologo)
+        Paciente paciente = pacienteRepositorio.findByPersonaId(persona.getId_persona()).orElse(null);
+        Odontologo odontologo = odontologoRepositorio.findByPersonaId(persona.getId_persona()).orElse(null);
+
+        //  Lógica para Paciente (basada en ESTADO)
+        if (paciente != null) {
+            // Permisos que tiene sin importar el estado (siempre que sea paciente)
+            permisos.add("PERM_VER_MI_PERFIL_PACIENTE");
+            permisos.add("PERM_VER_INICIO");
+            if (paciente.getEstado_paciente() != null && paciente.getEstado_paciente().equalsIgnoreCase("Activo")) {
+                permisos.add("PERM_RESERVAR_TURNO");
+                permisos.add("PERM_VER_MIS_TURNOS");
+            } else if (paciente.getEstado_paciente() != null && paciente.getEstado_paciente().equalsIgnoreCase("Inactivo")) {
+                permisos.add("PERM_VER_MIS_TURNOS"); // Paciente inactivo SÍ puede ver sus turnos/historia
+            }
+        }
+
+        //  Lógica para Odontólogo (basada en ESTADO)
+        if (odontologo != null) {
+            if (odontologo.getEstado_odont() != null && odontologo.getEstado_odont().equalsIgnoreCase("Activo")) {
+                permisos.add("PERM_VER_MI_PERFIL_OD");
+                permisos.add("PERM_VER_INICIO_ODONT");
+                permisos.add("PERM_GESTIONAR_HORARIOS_OD");
+                permisos.add("PERM_GESTIONAR_TURNOS_OD");
+                permisos.add("PERM_VER_HISTORIAS_CLINICAS_OD");
+                permisos.add("PERM_VER_MI_AGENDA_OD");
+            }
+            // Si está Inactivo, simplemente no se le añaden permisos de odontólogo.
+        }
+
+        // 6. Lógica para Admin (basada en ROL estático)
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("Admin"));
+        
+        if (isAdmin) {
+  permisos.add("PERM_GESTIONAR_PACIENTES");
+  permisos.add("PERM_VER_AGENDA_EQUIPO_ADMIN");
+  permisos.add("PERM_GESTIONAR_ODONTOLOGOS");
+  permisos.add("PERM_VER_INICIO_ADMIN");
+  permisos.add("PERM_GESTIONAR_PERSONAS");
+  permisos.add("PERM_GESTIONAR_HORARIOS_ADMIN");
+  permisos.add("PERM_GESTIONAR_TURNOS_ADMIN");
+  permisos.add("PERM_GESTIONAR_HISTORIAS_CLINICAS_ADMIN");
+  permisos.add("PERM_VER_MI_PERFIL_ADMIN");
+}
+
+        //  Permisos generales para CUALQUIER usuario logueado
+        permisos.add("PERM_CAMBIAR_PASSWORD");
+
+
+        //  Crear los claims para el JWT
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("permisos", new ArrayList<>(permisos)); 
+        extraClaims.put("idUsuario", persona.getId_persona()); 
+
+        //  Genera el token USANDO los claims
         String token = jwtService.getToken(extraClaims, userDetails);
-        return AuthResponse.builder().token(token).build();
+        
+        //  Devolver la nueva respuesta completa
+        return AuthResponse.builder()
+            .token(token)
+            .idUsuario(persona.getId_persona())
+            .email(persona.getEmail())
+            .permisos(new ArrayList<>(permisos)) 
+            .build();
     }
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // 1) Crear y guardar Persona (aquí no configuré PasswordEncoder — añade según
-        // tu SecurityConfig)
+        // 1) Crear y guardar Persona
         Persona persona = new Persona();
         persona.setNombre(request.getNombre());
         persona.setApellido(request.getApellido());
@@ -70,17 +137,16 @@ public class AuthService {
         Rol rolPaciente = rolRepositorio.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Error: Rol PACIENTE no encontrado en la base de datos."));
 
-        // b. Crear la relación en la tabla persona_rol
+        // Crear la relación en la tabla persona_rol
         PersonaRol personaRol = new PersonaRol();
-        personaRol.setIdPersona(savedPersona); // Vincula a la persona recién creada
-        personaRol.setIdRol(rolPaciente); // Vincula al rol Paciente
-
-        // c. Guardar la relación
+        personaRol.setIdPersona(savedPersona); 
+        personaRol.setIdRol(rolPaciente); 
         personaRolRepositorio.save(personaRol);
 
-        // 2) Crear Paciente asociado y asignar coberturas si vienen ids
+        // Crear Paciente asociado
         Paciente paciente = new Paciente();
         paciente.setPersona(savedPersona);
+        paciente.setEstado_paciente("Activo"); // Establecer estado al registrar
 
         if (request.getCoberturaIds() != null && !request.getCoberturaIds().isEmpty()) {
             List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(request.getCoberturaIds());
@@ -91,8 +157,8 @@ public class AuthService {
 
         pacienteRepositorio.save(paciente);
 
-        // 3) Generar token o devolver respuesta básica
-        return AuthResponse.builder().token(jwtService.getToken(savedPersona)).build();
+        // 3) Generar token HACIENDO LOGIN
+        LoginRequest loginRequest = new LoginRequest(request.getEmail(), request.getPassword());
+        return login(loginRequest); 
     }
-
 }

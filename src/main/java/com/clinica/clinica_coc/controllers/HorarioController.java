@@ -6,6 +6,7 @@ import com.clinica.clinica_coc.services.HorarioServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class HorarioController {
      * GET /api/horarios/{idOdontologo}
      */
     @GetMapping("/{idOdontologo}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_HORARIOS_OD', 'PERM_GESTIONAR_HORARIOS_ADMIN')")
     public ResponseEntity<List<HorarioResponse>> getHorariosPorOdontologo(
             @PathVariable Long idOdontologo) {
         List<HorarioResponse> horarios = horarioServicio.getHorariosPorOdontologo(idOdontologo);
@@ -33,6 +35,7 @@ public class HorarioController {
      * POST /api/horarios
      */
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_HORARIOS_OD', 'PERM_GESTIONAR_HORARIOS_ADMIN')")
     public ResponseEntity<HorarioResponse> crearHorario(
             @RequestBody HorarioRequest request) {
         HorarioResponse nuevoHorario = horarioServicio.crearHorario(request);
@@ -44,6 +47,7 @@ public class HorarioController {
      * PUT /api/horarios/{idHorario}
      */
     @PutMapping("/{idHorario}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_HORARIOS_OD', 'PERM_GESTIONAR_HORARIOS_ADMIN')")
     public ResponseEntity<HorarioResponse> actualizarHorario(
             @PathVariable Long idHorario,
             @RequestBody HorarioRequest request) {
@@ -56,6 +60,7 @@ public class HorarioController {
      * DELETE /api/horarios/{idHorario}
      */
     @DeleteMapping("/{idHorario}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_HORARIOS_OD', 'PERM_GESTIONAR_HORARIOS_ADMIN')")
     public ResponseEntity<Void> eliminarHorario(@PathVariable Long idHorario) {
         horarioServicio.eliminarHorario(idHorario);
         return ResponseEntity.noContent().build(); // Retorna 204 No Content

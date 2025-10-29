@@ -2,7 +2,10 @@ package com.clinica.clinica_coc.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; 
 import org.springframework.security.authentication.AuthenticationProvider;
+// --- Importa EnableMethodSecurity ---
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // <--- AÑADIDO
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -14,11 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
-import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@EnableMethodSecurity 
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -30,29 +33,20 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authRequest -> authRequest
+                        
+                        // 1. Rutas Públicas
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/coberturas").permitAll()
                         .requestMatchers("/api/especialidades").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/personas/cambiar-password").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/pacientes/persona/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/pacientes/persona/**").hasAnyAuthority("Paciente", "Admin")
-                        .requestMatchers(HttpMethod.GET, "/api/turnos/paciente/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/odontologos/persona/**").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.GET, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.POST, "/api/horarios").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.PUT, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.DELETE, "/api/horarios/**").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.GET, "/api/turnos/**").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.GET, "/api/turnos/buscar").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.GET, "/api/turnos/buscarPorMes").hasAnyAuthority("Odontologo", "Admin")
-                        .requestMatchers(HttpMethod.POST, "/api/paciente").hasAnyAuthority("Admin")
-                        .requestMatchers(HttpMethod.POST, "/api/personas").hasAnyAuthority("Admin")
-                        .requestMatchers(HttpMethod.PUT, "/api/personas").hasAnyAuthority("Admin")
-                        .requestMatchers(HttpMethod.GET, "/api/personas").hasAnyAuthority("Admin")
-                        .requestMatchers(HttpMethod.POST, "/api/turnos").hasAnyAuthority("Paciente", "Admin")
+                        
+                        // 2. Todas las demás rutas requieren autenticación
+                        // Las reglas de permisos (PERM_...) se manejan
+                        // en cada controlador con @PreAuthorize
+                        .anyRequest().authenticated()
+                )
 
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -69,5 +63,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }

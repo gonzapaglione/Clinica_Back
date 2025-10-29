@@ -20,6 +20,7 @@ import com.clinica.clinica_coc.repositories.RolRepositorio;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
@@ -43,6 +44,7 @@ public class PersonaController {
 
     // GET: listar todas las personas con roles
     @GetMapping
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PERSONAS')")
     public ResponseEntity<List<PersonaDTO>> listarPersonas() {
         List<Persona> personas = personaServicio.listarPersonas();
 
@@ -56,6 +58,7 @@ public class PersonaController {
 
     // GET: listar persona por ID con roles
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PERSONAS')")
     public ResponseEntity<PersonaDTO> listarPersonaPorId(@PathVariable Long id) {
         Persona persona = personaServicio.buscarPersonaPorId(id);
 
@@ -69,6 +72,7 @@ public class PersonaController {
 
     // POST: agregar persona (con roles opcionales)
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PERSONAS')")
     public ResponseEntity<PersonaDTO> agregarPersona(@RequestBody PersonaRequest request) {
         logger.info("Persona a agregar: " + request);
 
@@ -110,6 +114,7 @@ public class PersonaController {
 
     // PUT: editar persona (con roles opcionales)
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_PERSONAS', 'PERM_GESTIONAR_PACIENTES')")
     public ResponseEntity<PersonaDTO> editarPersona(
             @PathVariable Long id,
             @RequestBody PersonaRequest request) {
@@ -164,6 +169,7 @@ public class PersonaController {
 
     // DELETE: baja lógica
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PERSONAS')")
     public ResponseEntity<?> bajaLogicaPersona(@PathVariable Long id) {
         Persona persona = personaServicio.buscarPersonaPorId(id);
         if (persona == null) {
@@ -209,6 +215,7 @@ public class PersonaController {
     }
     
 @PutMapping("/cambiar-password")
+@PreAuthorize("hasAuthority('PERM_CAMBIAR_PASSWORD')")
 public ResponseEntity<?> cambiarPassword(@RequestBody CambioPasswordDTO dto) {
 
     String email = SecurityContextHolder.getContext().getAuthentication().getName();

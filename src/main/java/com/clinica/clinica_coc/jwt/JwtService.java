@@ -3,12 +3,11 @@ package com.clinica.clinica_coc.jwt;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List; 
 import java.util.Map;
 import java.util.function.Function;
-
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -43,6 +42,12 @@ public class JwtService {
 
     public String getUsernameFromToken(String token) {
         return getClaim(token, Claims::getSubject);
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public List<String> getPermisosFromToken(String token) {
+        return getClaim(token, claims -> claims.get("permisos", List.class));
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {

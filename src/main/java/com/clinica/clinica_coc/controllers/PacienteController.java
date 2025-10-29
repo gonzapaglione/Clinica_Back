@@ -13,6 +13,7 @@ import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Persona;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +32,7 @@ public class PacienteController {
 
     // GET: listar todos
     @GetMapping()
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_PACIENTES', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD')")
     public ResponseEntity<List<PacienteResponse>> listarPacientes() {
         List<Paciente> pacientes = pacienteServicio.listarPacientes();
 
@@ -47,6 +49,7 @@ public class PacienteController {
 
     // GET: listar por id
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_PACIENTES', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD')")
     public ResponseEntity<PacienteResponse> listarPacientePorId(@PathVariable Long id) {
         Paciente paciente = pacienteServicio.buscarPacientePorId(id);
 
@@ -58,7 +61,9 @@ public class PacienteController {
         return ResponseEntity.ok(response);
     }
 
+    // GET: Ver perfil de paciente (solo el propio paciente)
     @GetMapping("/persona/{idPersona}")
+    @PreAuthorize("hasAuthority('PERM_VER_MI_PERFIL_PACIENTE')")
     public ResponseEntity<PacienteResponse> listarPacientePorIdPersona(@PathVariable Long idPersona) {
         Paciente paciente = pacienteServicio.buscarPacientePorIdPersona(idPersona);
 
@@ -72,6 +77,7 @@ public class PacienteController {
 
     // POST: agregar paciente
     @PostMapping()
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PACIENTES')") 
     public ResponseEntity<PacienteResponse> agregarPaciente(@RequestBody PacienteRequest request) {
 
         System.out.println("Persona a agregar: " + request.getPersona());
@@ -86,6 +92,7 @@ public class PacienteController {
 
     // PUT: editar paciente
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PACIENTES')") 
     public ResponseEntity<PacienteResponse> editarPaciente(
             @PathVariable Long id,
             @RequestBody PacienteRequest request) {
@@ -102,6 +109,7 @@ public class PacienteController {
 
     // DELETE: baja logica paciente
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PACIENTES')") 
     public ResponseEntity<BajaResponse> bajaLogicaPaciente(@PathVariable Long id) {
         Paciente pacienteActualizado = pacienteServicio.bajaLogicaPaciente(id);
         if (pacienteActualizado == null) {

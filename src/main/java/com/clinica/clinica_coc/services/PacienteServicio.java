@@ -42,7 +42,7 @@ public class PacienteServicio implements IPacienteServicio {
     private PersonaRolServicio personaRolServicio;
 
     @Autowired
-    private RolRepositorio rolRepositorio; // nuevo servicio para roles
+    private RolRepositorio rolRepositorio; 
 
     @Override
     public List<Paciente> listarPacientes() {
@@ -127,6 +127,7 @@ public class PacienteServicio implements IPacienteServicio {
         // 3. Buscar coberturas usando el servicio
         List<CoberturaSocial> coberturas = coberturaServicio.buscarPorIds(coberturasIds);
 
+
         // 4. Crear paciente
         Paciente paciente = new Paciente();
         paciente.setPersona(persona);
@@ -148,6 +149,7 @@ public class PacienteServicio implements IPacienteServicio {
         Paciente paciente = pacienteRepositorio.findById(id).orElse(null);
         if (paciente == null)
             return null;
+        paciente.setEstado_paciente(request.getEstado_paciente());
 
         // 2. Actualizar datos de la persona
         Persona persona = paciente.getPersona();

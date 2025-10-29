@@ -53,7 +53,11 @@ public class OdontologoServicio implements IOdontologoServicio {
 
     @Override
     public List<Odontologo> listarOdontologos() {
-        return odontologoRepositorio.findAll();
+           return odontologoRepositorio.findAll();
+    }
+
+     public List<Odontologo> listarOdontologosActivos(String estado) {
+       return odontologoRepositorio.buscarTodosPorEstado(estado);
     }
 
     @Override
@@ -270,4 +274,6 @@ public class OdontologoServicio implements IOdontologoServicio {
         // Ahora, elimina al odontólogo
         odontologoRepositorio.delete(odontologo);
     }
+
+   
 }

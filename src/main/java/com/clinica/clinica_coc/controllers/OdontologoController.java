@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.clinica.clinica_coc.DTO.OdontologoRequest;
 import com.clinica.clinica_coc.DTO.OdontologoResponse;
@@ -27,8 +28,10 @@ public class OdontologoController {
     @Autowired
     private OdontologoServicio odontologoServicio;
 
-    // GET: listar todos los odontólogos
+   
+ // GET: listar todos los odontólogos
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_ODONTOLOGOS', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD', 'PERM_RESERVAR_TURNO')")
     public ResponseEntity<List<OdontologoResponse>> listarOdontologos() {
         List<Odontologo> odontologos = odontologoServicio.listarOdontologos();
 
@@ -43,8 +46,27 @@ public class OdontologoController {
         return ResponseEntity.ok(odontologosDTO);
     }
 
+   @GetMapping("/activos")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_ODONTOLOGOS', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD')")
+    public ResponseEntity<List<OdontologoResponse>> listarOdontologosActivos() {
+        List<Odontologo> odontologos = odontologoServicio.listarOdontologosActivos("Activo");
+
+        if (odontologos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        List<OdontologoResponse> odontologosDTO = odontologos.stream()
+                .map(this::convertirAResponse)
+                .toList();
+
+        return ResponseEntity.ok(odontologosDTO);
+    }
+
+
+
     // GET: obtener odontólogo por id
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_ODONTOLOGOS', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD', 'PERM_RESERVAR_TURNO')")
     public ResponseEntity<OdontologoResponse> obtenerOdontologoPorId(@PathVariable Long id) {
         Odontologo odontologo = odontologoServicio.buscarOdontologoPorId(id);
 
@@ -57,6 +79,7 @@ public class OdontologoController {
     }
 
     @GetMapping("/persona/{idPersona}")
+    @PreAuthorize("hasAnyAuthority('PERM_VER_MI_PERFIL_OD', 'PERM_VER_MI_PERFIL_ADMIN')")
     public ResponseEntity<OdontologoResponse> obtenerOdontologoPorIdPersona(@PathVariable Long idPersona) {
         Odontologo odontologo = odontologoServicio.buscarOdontologoPorIdPersona(idPersona);
 
@@ -70,6 +93,7 @@ public class OdontologoController {
 
     // POST: crear nuevo odontólogo
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_ODONTOLOGOS')")
     public ResponseEntity<OdontologoResponse> crearOdontologo(@RequestBody OdontologoRequest request) {
         logger.info("Creando odontólogo: " + request);
 
@@ -86,6 +110,7 @@ public class OdontologoController {
 
     // PUT: editar odontólogo
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_ODONTOLOGOS')")
     public ResponseEntity<OdontologoResponse> editarOdontologo(
             @PathVariable Long id,
             @RequestBody OdontologoRequest request) {
@@ -103,6 +128,7 @@ public class OdontologoController {
 
     // DELETE: baja lógica (delegada al servicio)
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_ODONTOLOGOS')")
     public ResponseEntity<BajaResponse> quitarRolOdontologo(@PathVariable Long id) {
         // Verificar existencia previa para devolver 404 si no existe
         Odontologo existente = odontologoServicio.buscarOdontologoPorId(id);
@@ -162,6 +188,7 @@ public class OdontologoController {
     }
 
     @PostMapping("/asignar")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_ODONTOLOGOS')")
     public ResponseEntity<OdontologoResponse> asignarRolOdontologo(@RequestBody AsignarOdontologoRequest request) {
         try {
             Odontologo nuevoOdontologo = odontologoServicio.asignarRolOdontologo(

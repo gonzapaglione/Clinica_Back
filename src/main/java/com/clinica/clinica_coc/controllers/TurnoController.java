@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ public class TurnoController {
     private TurnoServicio turnoServicio;
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<List<TurnoResponse>> listarTurnos() {
         List<TurnoResponse> turnos = turnoServicio.listarTurnos();
         if (turnos.isEmpty()) {
@@ -40,6 +42,7 @@ public class TurnoController {
     }
 
 @GetMapping("/buscar")
+@PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<List<TurnoResponse>> buscarTurnos(
             @RequestParam(required = false) String paciente,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
@@ -57,6 +60,7 @@ public class TurnoController {
     }
 
     @GetMapping("/buscarPorMes")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public  ResponseEntity<List<TurnoResponse>> buscarTurnosPorCriterios(
             @RequestParam Long odontologoId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
@@ -77,12 +81,14 @@ public class TurnoController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<TurnoResponse> obtenerTurno(@PathVariable Long id) {
         TurnoResponse turno = turnoServicio.obtenerTurno(id);
         return ResponseEntity.ok(turno);
     }
 
     @GetMapping("/paciente/{idPaciente}")
+    @PreAuthorize("hasAuthority('PERM_VER_MIS_TURNOS')")
     public ResponseEntity<List<TurnoResponse>> listarTurnosPorPaciente(@PathVariable Long idPaciente) {
         List<TurnoResponse> turnos = turnoServicio.listarTurnosPorPaciente(idPaciente);
         if (turnos.isEmpty()) {
@@ -92,6 +98,7 @@ public class TurnoController {
     }
 
     @GetMapping("/odontologo/{idOdontologo}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<List<TurnoResponse>> listarTurnosPorOdontologoYFecha(
             @PathVariable Long idOdontologo,
             @RequestParam("fecha") String fecha) {
@@ -106,18 +113,21 @@ public class TurnoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_RESERVAR_TURNO')")
     public ResponseEntity<TurnoResponse> crearTurno(@RequestBody TurnoRequest request) {
         TurnoResponse turnoCreado = turnoServicio.crearTurno(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(turnoCreado);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<TurnoResponse> actualizarTurno(@PathVariable Long id, @RequestBody TurnoRequest request) {
         TurnoResponse turnoActualizado = turnoServicio.actualizarTurno(id, request);
         return ResponseEntity.ok(turnoActualizado);
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<TurnoResponse> actualizarParcialmenteTurno(
             @PathVariable Long id, 
             @RequestBody Map<String, Object> campos) {
@@ -127,6 +137,7 @@ public class TurnoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<Void> eliminarTurno(@PathVariable Long id) {
         turnoServicio.eliminarTurno(id);
         return ResponseEntity.noContent().build();
