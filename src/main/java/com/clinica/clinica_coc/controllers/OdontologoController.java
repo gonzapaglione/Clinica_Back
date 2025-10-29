@@ -15,6 +15,7 @@ import com.clinica.clinica_coc.DTO.EspecialidadDTO;
 import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.services.OdontologoServicio;
+import com.clinica.clinica_coc.services.TurnoServicio;
 
 import java.util.List;
 
@@ -28,8 +29,10 @@ public class OdontologoController {
     @Autowired
     private OdontologoServicio odontologoServicio;
 
-   
- // GET: listar todos los odontólogos
+    @Autowired
+    private TurnoServicio turnoServicio;
+
+    // GET: listar todos los odontólogos
     @GetMapping
     @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_ODONTOLOGOS', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD', 'PERM_RESERVAR_TURNO')")
     public ResponseEntity<List<OdontologoResponse>> listarOdontologos() {
@@ -46,7 +49,7 @@ public class OdontologoController {
         return ResponseEntity.ok(odontologosDTO);
     }
 
-   @GetMapping("/activos")
+    @GetMapping("/activos")
     @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_ODONTOLOGOS', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD')")
     public ResponseEntity<List<OdontologoResponse>> listarOdontologosActivos() {
         List<Odontologo> odontologos = odontologoServicio.listarOdontologosActivos("Activo");
@@ -61,8 +64,6 @@ public class OdontologoController {
 
         return ResponseEntity.ok(odontologosDTO);
     }
-
-
 
     // GET: obtener odontólogo por id
     @GetMapping("/{id}")
@@ -89,6 +90,14 @@ public class OdontologoController {
 
         OdontologoResponse dto = convertirAResponse(odontologo);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{id}/horarios-disponibles")
+    public ResponseEntity<List<String>> obtenerHorariosDisponibles(
+            @PathVariable Long id,
+            @RequestParam("fecha") String fecha) {
+        List<String> horariosDisponibles = turnoServicio.obtenerHorariosDisponibles(id, fecha);
+        return ResponseEntity.ok(horariosDisponibles);
     }
 
     // POST: crear nuevo odontólogo

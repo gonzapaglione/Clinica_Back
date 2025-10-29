@@ -2,7 +2,7 @@ package com.clinica.clinica_coc.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 // --- Importa EnableMethodSecurity ---
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // <--- AÑADIDO
@@ -21,7 +21,7 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity 
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -33,20 +33,18 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authRequest -> authRequest
-                        
+
                         // 1. Rutas Públicas
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/coberturas").permitAll()
                         .requestMatchers("/api/especialidades").permitAll()
-                        
+
                         // 2. Todas las demás rutas requieren autenticación
                         // Las reglas de permisos (PERM_...) se manejan
                         // en cada controlador con @PreAuthorize
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

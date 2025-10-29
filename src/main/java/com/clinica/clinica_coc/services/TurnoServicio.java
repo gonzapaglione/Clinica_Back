@@ -4,9 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -33,6 +36,8 @@ import com.clinica.clinica_coc.repositories.TurnoSpecification;
 
 @Service
 public class TurnoServicio {
+
+    private static final DateTimeFormatter HORA_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     @Autowired
     private TurnoRepositorio turnoRepositorio;
@@ -62,13 +67,14 @@ public class TurnoServicio {
             Long odontologoId,
             String orden) {
 
-        // 1. Construimos la especificación dinámica 
-        Specification<Turno> spec = TurnoSpecification.build(pacienteNombre, fechaInicio, fechaFin, estados, odontologoId);
+        // 1. Construimos la especificación dinámica
+        Specification<Turno> spec = TurnoSpecification.build(pacienteNombre, fechaInicio, fechaFin, estados,
+                odontologoId);
 
         // 2. Definimos el orden
         Sort.Direction direction = "ASC".equalsIgnoreCase(orden)
-                                ? Sort.Direction.ASC
-                                : Sort.Direction.DESC;
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
         Sort sort = Sort.by(direction, "fechaHora");
 
         // 3. Ejecutamos la consulta
@@ -81,21 +87,19 @@ public class TurnoServicio {
     }
 
     public List<TurnoResponse> buscarTurnosPorMes(
-            Long odontologoId, 
-            LocalDate fechaInicio, 
-            LocalDate fechaFin
-    ) {
-        
-        // Convierte fechas a rango LocalDateTime
-        LocalDateTime inicioRango = fechaInicio.atStartOfDay(); 
-        
-        // (ej. 2025-10-31 -> 2025-10-31T23:59:59.999...)
-        LocalDateTime finRango = fechaFin.atTime(LocalTime.MAX);  
+            Long odontologoId,
+            LocalDate fechaInicio,
+            LocalDate fechaFin) {
 
-        //  Llamar al repositorio 
+        // Convierte fechas a rango LocalDateTime
+        LocalDateTime inicioRango = fechaInicio.atStartOfDay();
+
+        // (ej. 2025-10-31 -> 2025-10-31T23:59:59.999...)
+        LocalDateTime finRango = fechaFin.atTime(LocalTime.MAX);
+
+        // Llamar al repositorio
         List<Turno> turnos = turnoRepositorio.findTurnosByMes(
-                odontologoId, inicioRango, finRango
-        );
+                odontologoId, inicioRango, finRango);
         return turnos.stream()
                 .map(this::mapTurnoToResponse)
                 .collect(Collectors.toList());
@@ -122,43 +126,109 @@ public class TurnoServicio {
                 .collect(Collectors.toList());
     }
 
-@Transactional(readOnly = true)
-public List<TurnoResponse> listarTurnosPorOdontologoYFecha(Long idOdontologo, String fechaStr) {
-    LocalDate fecha;
-    try {
-        fecha = LocalDate.parse(fechaStr, DateTimeFormatter.ISO_LOCAL_DATE);
-    } catch (Exception e) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fecha inválido. Usar yyyy-MM-dd");
+    @Transactional(readOnly = true)
+    public List<String> obtenerHorariosDisponibles(Long idOdontologo, String fechaStr) {
+        LocalDate fecha;
+        try {
+            fecha = LocalDate.parse(fechaStr, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fecha inválido. Usar yyyy-MM-dd");
+        }
+
+        if (!odontologoRepositorio.existsById(idOdontologo)) {
+            throw new ResourceNotFoundException("Odontólogo no encontrado con id: " + idOdontologo);
+        }
+
+        com.clinica.clinica_coc.models.DiaSemana diaEnum = convertirDiaJavaAEnum(fecha.getDayOfWeek());
+        List<Horario> horariosDelDia = horarioRepositorio.findByOdontologoIdOdontologoAndDiaSemana(idOdontologo,
+                diaEnum);
+
+        if (horariosDelDia.isEmpty()) {
+            return List.of();
+        }
+
+        LocalDateTime inicioDelDia = fecha.atStartOfDay();
+        LocalDateTime finDelDia = fecha.atTime(LocalTime.MAX);
+
+        List<Turno> turnosDelDia = turnoRepositorio.findByOdontologoIdAndFechaHoraBetween(idOdontologo, inicioDelDia,
+                finDelDia);
+
+        Set<LocalTime> horariosReservados = turnosDelDia.stream()
+                .filter(turno -> turnoCuentaComoOcupado(turno.getEstadoTurno()))
+                .map(turno -> turno.getFechaHora().toLocalTime())
+                .collect(Collectors.toCollection(HashSet::new));
+
+        Set<LocalTime> horariosDisponibles = new HashSet<>();
+
+        for (Horario horario : horariosDelDia) {
+            Integer duracion = horario.getDuracionTurno();
+            if (duracion == null || duracion <= 0) {
+                continue;
+            }
+
+            LocalTime inicioSlot = horario.getHoraInicio();
+            LocalTime ultimoInicio = horario.getHoraFin().minusMinutes(duracion);
+
+            while (!inicioSlot.isAfter(ultimoInicio)) {
+                if (!horariosReservados.contains(inicioSlot)) {
+                    horariosDisponibles.add(inicioSlot);
+                }
+                inicioSlot = inicioSlot.plusMinutes(duracion);
+            }
+        }
+
+        return horariosDisponibles.stream()
+                .sorted()
+                .map(hora -> hora.format(HORA_FORMATTER))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    LocalDateTime inicioDelDia = fecha.atStartOfDay(); 
-    LocalDateTime finDelDia = fecha.atTime(LocalTime.MAX); 
+    @Transactional(readOnly = true)
+    public List<TurnoResponse> listarTurnosPorOdontologoYFecha(Long idOdontologo, String fechaStr) {
+        LocalDate fecha;
+        try {
+            fecha = LocalDate.parse(fechaStr, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fecha inválido. Usar yyyy-MM-dd");
+        }
 
-    com.clinica.clinica_coc.models.DiaSemana diaEnum = convertirDiaJavaAEnum(fecha.getDayOfWeek());
+        LocalDateTime inicioDelDia = fecha.atStartOfDay();
+        LocalDateTime finDelDia = fecha.atTime(LocalTime.MAX);
 
-    System.out.println("DEBUG: Buscando horarios para Odontólogo ID: " + idOdontologo + " en Día: " + diaEnum);
+        com.clinica.clinica_coc.models.DiaSemana diaEnum = convertirDiaJavaAEnum(fecha.getDayOfWeek());
 
-    List<Horario> horariosDelDia = horarioRepositorio.findByOdontologoIdOdontologoAndDiaSemana(idOdontologo, diaEnum);
+        System.out.println("DEBUG: Buscando horarios para Odontólogo ID: " + idOdontologo + " en Día: " + diaEnum);
 
-    System.out.println("DEBUG: Horarios encontrados: " + horariosDelDia);
-    // 3. Pasa la lista de horarios al método de mapeo
-    return turnoRepositorio.findByOdontologoIdAndFechaHoraBetween(idOdontologo, inicioDelDia, finDelDia).stream()
-            .map(turno -> mapTurnoToResponse(turno, horariosDelDia)) // <-- Pasamos la lista aquí
-            .collect(Collectors.toList());
-}
+        List<Horario> horariosDelDia = horarioRepositorio.findByOdontologoIdOdontologoAndDiaSemana(idOdontologo,
+                diaEnum);
 
-private com.clinica.clinica_coc.models.DiaSemana convertirDiaJavaAEnum(java.time.DayOfWeek diaJava) {
-    switch (diaJava) {
-        case MONDAY: return com.clinica.clinica_coc.models.DiaSemana.Lunes;
-        case TUESDAY: return com.clinica.clinica_coc.models.DiaSemana.Martes;
-        case WEDNESDAY: return com.clinica.clinica_coc.models.DiaSemana.Miércoles;
-        case THURSDAY: return com.clinica.clinica_coc.models.DiaSemana.Jueves;
-        case FRIDAY: return com.clinica.clinica_coc.models.DiaSemana.Viernes;
-        case SATURDAY: return com.clinica.clinica_coc.models.DiaSemana.Sábado;
-        case SUNDAY: return com.clinica.clinica_coc.models.DiaSemana.Domingo;
-        default: throw new IllegalArgumentException("Día de la semana inválido: " + diaJava);
+        System.out.println("DEBUG: Horarios encontrados: " + horariosDelDia);
+        // 3. Pasa la lista de horarios al método de mapeo
+        return turnoRepositorio.findByOdontologoIdAndFechaHoraBetween(idOdontologo, inicioDelDia, finDelDia).stream()
+                .map(turno -> mapTurnoToResponse(turno, horariosDelDia)) // <-- Pasamos la lista aquí
+                .collect(Collectors.toList());
     }
-}
+
+    private com.clinica.clinica_coc.models.DiaSemana convertirDiaJavaAEnum(java.time.DayOfWeek diaJava) {
+        switch (diaJava) {
+            case MONDAY:
+                return com.clinica.clinica_coc.models.DiaSemana.Lunes;
+            case TUESDAY:
+                return com.clinica.clinica_coc.models.DiaSemana.Martes;
+            case WEDNESDAY:
+                return com.clinica.clinica_coc.models.DiaSemana.Miércoles;
+            case THURSDAY:
+                return com.clinica.clinica_coc.models.DiaSemana.Jueves;
+            case FRIDAY:
+                return com.clinica.clinica_coc.models.DiaSemana.Viernes;
+            case SATURDAY:
+                return com.clinica.clinica_coc.models.DiaSemana.Sábado;
+            case SUNDAY:
+                return com.clinica.clinica_coc.models.DiaSemana.Domingo;
+            default:
+                throw new IllegalArgumentException("Día de la semana inválido: " + diaJava);
+        }
+    }
 
     @Transactional
     public TurnoResponse crearTurno(TurnoRequest request) {
@@ -243,103 +313,111 @@ private com.clinica.clinica_coc.models.DiaSemana convertirDiaJavaAEnum(java.time
         }
         return estadoNormalizado;
     }
-    
-private TurnoResponse mapTurnoToResponse(Turno turno) {
-    if (turno == null) {
-        return null;
+
+    private TurnoResponse mapTurnoToResponse(Turno turno) {
+        if (turno == null) {
+            return null;
+        }
+
+        List<Horario> horariosDelOdontologo;
+        Odontologo odontologo = turno.getOdontologo();
+
+        if (odontologo != null && turno.getFechaHora() != null) {
+            // 1. Obtenemos la fecha y el día ENUM
+            LocalDate fecha = turno.getFechaHora().toLocalDate();
+            com.clinica.clinica_coc.models.DiaSemana diaEnum = convertirDiaJavaAEnum(fecha.getDayOfWeek());
+
+            // 2. Buscamos los horarios para ESE día
+            horariosDelOdontologo = horarioRepositorio.findByOdontologoIdOdontologoAndDiaSemana(
+                    odontologo.getId_odontologo(),
+                    diaEnum);
+        } else {
+            // Si no hay odontólogo o fecha, pasamos una lista vacía
+            horariosDelOdontologo = java.util.Collections.emptyList();
+        }
+
+        return mapTurnoToResponse(turno, horariosDelOdontologo);
     }
 
-    List<Horario> horariosDelOdontologo;
-    Odontologo odontologo = turno.getOdontologo();
+    private TurnoResponse mapTurnoToResponse(Turno turno, List<Horario> horariosDelOdontologo) {
+        Paciente paciente = turno.getPaciente();
+        Odontologo odontologo = turno.getOdontologo();
 
-    if (odontologo != null && turno.getFechaHora() != null) {
-        // 1. Obtenemos la fecha y el día ENUM
-        LocalDate fecha = turno.getFechaHora().toLocalDate();
-        com.clinica.clinica_coc.models.DiaSemana diaEnum = convertirDiaJavaAEnum(fecha.getDayOfWeek());
+        PacienteResumidoDTO pacienteDTO = null;
+        if (paciente != null) {
+            pacienteDTO = PacienteResumidoDTO.builder()
+                    .id_paciente(paciente.getId_paciente())
+                    .nombre(paciente.getPersona() != null ? paciente.getPersona().getNombre() : "N/A")
+                    .apellido(paciente.getPersona() != null ? paciente.getPersona().getApellido() : "")
+                    .build();
+        }
 
-        // 2. Buscamos los horarios para ESE día 
-        horariosDelOdontologo = horarioRepositorio.findByOdontologoIdOdontologoAndDiaSemana(
-            odontologo.getId_odontologo(),
-            diaEnum
-        );
-    } else {
-        // Si no hay odontólogo o fecha, pasamos una lista vacía
-        horariosDelOdontologo = java.util.Collections.emptyList();
-    }
+        OdontologoResumidoDTO odontologoDTO = null;
+        if (odontologo != null) {
+            odontologoDTO = OdontologoResumidoDTO.builder()
+                    .id_odontologo(odontologo.getId_odontologo())
+                    .nombre(odontologo.getPersona() != null ? odontologo.getPersona().getNombre() : "N/A")
+                    .apellido(odontologo.getPersona() != null ? odontologo.getPersona().getApellido() : "")
+                    .build();
+        }
 
-    return mapTurnoToResponse(turno, horariosDelOdontologo);
-}
+        LocalDateTime fechaHoraInicio = turno.getFechaHora();
+        LocalTime horaInicioTurno = fechaHoraInicio.toLocalTime();
 
-private TurnoResponse mapTurnoToResponse(Turno turno, List<Horario> horariosDelOdontologo) {
-    Paciente paciente = turno.getPaciente();
-    Odontologo odontologo = turno.getOdontologo();
+        System.out.println("--- INICIO MAPEO TURNO ID: " + turno.getId_turno() + " ---");
+        System.out.println("DEBUG: Hora del turno leída: " + horaInicioTurno);
+        System.out.println("DEBUG: Horarios disponibles para filtrar (" + horariosDelOdontologo.size() + "):");
+        horariosDelOdontologo.forEach(h -> {
+            System.out.println("  -> Horario: " + h.getHoraInicio() + " a " + h.getHoraFin() + " (Dur: "
+                    + h.getDuracionTurno() + ")");
+        });
 
-    PacienteResumidoDTO pacienteDTO = null;
-    if (paciente != null) {
-        pacienteDTO = PacienteResumidoDTO.builder()
-                .id_paciente(paciente.getId_paciente())
-                .nombre(paciente.getPersona() != null ? paciente.getPersona().getNombre() : "N/A")
-                .apellido(paciente.getPersona() != null ? paciente.getPersona().getApellido() : "")
-                .build();
-    }
+        long duracionMinutos = 30;
 
-    OdontologoResumidoDTO odontologoDTO = null;
-    if (odontologo != null) {
-        odontologoDTO = OdontologoResumidoDTO.builder()
-                .id_odontologo(odontologo.getId_odontologo())
-                .nombre(odontologo.getPersona() != null ? odontologo.getPersona().getNombre() : "N/A")
-                .apellido(odontologo.getPersona() != null ? odontologo.getPersona().getApellido() : "")
-                .build();
-    }
-
-    
-    LocalDateTime fechaHoraInicio = turno.getFechaHora();
-    LocalTime horaInicioTurno = fechaHoraInicio.toLocalTime();
-
-    System.out.println("--- INICIO MAPEO TURNO ID: " + turno.getId_turno() + " ---");
-    System.out.println("DEBUG: Hora del turno leída: " + horaInicioTurno);
-    System.out.println("DEBUG: Horarios disponibles para filtrar (" + horariosDelOdontologo.size() + "):");
-    horariosDelOdontologo.forEach(h -> {
-        System.out.println("  -> Horario: " + h.getHoraInicio() + " a " + h.getHoraFin() + " (Dur: " + h.getDuracionTurno() + ")");
-    });
-
-    long duracionMinutos = 30; 
-
-    if (horariosDelOdontologo != null) {
-        Optional<Horario> horarioContenedor = horariosDelOdontologo.stream()
-            .filter(h -> !h.getHoraInicio().isAfter(horaInicioTurno) && h.getHoraFin().isAfter(horaInicioTurno))
-            .findFirst();
+        if (horariosDelOdontologo != null) {
+            Optional<Horario> horarioContenedor = horariosDelOdontologo.stream()
+                    .filter(h -> !h.getHoraInicio().isAfter(horaInicioTurno) && h.getHoraFin().isAfter(horaInicioTurno))
+                    .findFirst();
 
             if (horarioContenedor.isPresent()) {
-            System.out.println("DEBUG: ¡ÉXITO! Turno contenido en el bloque: " + horarioContenedor.get().getHoraInicio() + " - " + horarioContenedor.get().getHoraFin());
-        } else {
-            System.out.println("DEBUG: ¡FALLO! El turno NO está contenido en ningún bloque de horario.");
-        }
+                System.out.println("DEBUG: ¡ÉXITO! Turno contenido en el bloque: "
+                        + horarioContenedor.get().getHoraInicio() + " - " + horarioContenedor.get().getHoraFin());
+            } else {
+                System.out.println("DEBUG: ¡FALLO! El turno NO está contenido en ningún bloque de horario.");
+            }
 
-        if (horarioContenedor.isPresent()) {
-            duracionMinutos = horarioContenedor.get().getDuracionTurno();
+            if (horarioContenedor.isPresent()) {
+                duracionMinutos = horarioContenedor.get().getDuracionTurno();
+            }
         }
+        System.out.println("DEBUG: Duración asignada: " + duracionMinutos);
+        System.out.println("--- FIN MAPEO ---");
+
+        MotivoConsultaEnum motivoEnum = turno.getMotivoConsulta();
+        String motivoDescripcion = (motivoEnum != null) ? motivoEnum.getDescripcion() : null;
+
+        LocalDateTime fechaHoraFin = fechaHoraInicio.plusMinutes(duracionMinutos);
+        return TurnoResponse.builder()
+                .id_turno(turno.getId_turno())
+                .paciente(pacienteDTO)
+                .odontologo(odontologoDTO)
+                .motivoConsulta(motivoDescripcion)
+                .estadoTurno(turno.getEstadoTurno())
+                .fecha(fechaHoraInicio.toLocalDate())
+                .horaInicio(fechaHoraInicio.toLocalTime())
+                .horaFin(fechaHoraFin.toLocalTime())
+                .tratamiento(turno.getTratamiento())
+                .evolucion(turno.getEvolucion())
+                .build();
     }
-    System.out.println("DEBUG: Duración asignada: " + duracionMinutos);
-    System.out.println("--- FIN MAPEO ---");
 
-    MotivoConsultaEnum motivoEnum = turno.getMotivoConsulta();
-    String motivoDescripcion = (motivoEnum != null) ? motivoEnum.getDescripcion() : null;
-    
-    LocalDateTime fechaHoraFin = fechaHoraInicio.plusMinutes(duracionMinutos); 
-    return TurnoResponse.builder()
-            .id_turno(turno.getId_turno())
-            .paciente(pacienteDTO)
-            .odontologo(odontologoDTO)
-            .motivoConsulta(motivoDescripcion)
-            .estadoTurno(turno.getEstadoTurno())
-            .fecha(fechaHoraInicio.toLocalDate())
-            .horaInicio(fechaHoraInicio.toLocalTime())
-            .horaFin(fechaHoraFin.toLocalTime()) 
-            .tratamiento(turno.getTratamiento())
-            .evolucion(turno.getEvolucion())
-            .build();
-}
+    private boolean turnoCuentaComoOcupado(String estadoTurno) {
+        if (estadoTurno == null) {
+            return true;
+        }
+        String normalizado = estadoTurno.trim().toLowerCase();
+        return !normalizado.startsWith("cancelado");
+    }
 
     @Transactional
     public TurnoResponse actualizarTurnoParcial(Long idTurno, Map<String, Object> campos) {
@@ -366,7 +444,7 @@ private TurnoResponse mapTurnoToResponse(Turno turno, List<Horario> horariosDelO
                     }
                     break;
                 case "fechaHora":
-                    turno.setFechaHora(LocalDateTime.parse((String) value)); 
+                    turno.setFechaHora(LocalDateTime.parse((String) value));
                     break;
             }
         });
