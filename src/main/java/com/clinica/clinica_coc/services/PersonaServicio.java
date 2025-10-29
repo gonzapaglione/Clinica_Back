@@ -2,7 +2,10 @@ package com.clinica.clinica_coc.services;
 
 import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.models.Persona;
+import com.clinica.clinica_coc.models.PersonaRol;
+import com.clinica.clinica_coc.models.Rol;
 import com.clinica.clinica_coc.repositories.PersonaRepositorio;
+import com.clinica.clinica_coc.repositories.RolRepositorio;
 
 import jakarta.transaction.Transactional;
 
@@ -17,6 +20,12 @@ public class PersonaServicio implements IPersonaServicio {
 
     @Autowired
     private PersonaRepositorio personaRepositorio;
+
+    @Autowired
+    private RolRepositorio rolRepositorio;
+
+    @Autowired
+    private PersonaRolServicio personaRolServicio;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -80,6 +89,36 @@ public class PersonaServicio implements IPersonaServicio {
 
     public void save(Persona usuario) {
         personaRepositorio.save(usuario);
+    }
+
+    @Transactional
+    public Persona asignarRolAdmin(Long idPersona) {
+        // 1. Buscar la persona
+        Persona persona = personaRepositorio.findById(idPersona)
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada con id: " + idPersona));
+
+        // 2. Asignar el Rol de Admin
+        Rol rolAdmin = rolRepositorio.findById(3L)
+                .orElseThrow(() -> new RuntimeException("Rol Admin no encontrado"));
+
+        // 3. Verificar si ya tiene el rol antes de añadirlo
+        boolean tieneRol = persona.getPersonaRolList().stream()
+                .anyMatch(pr -> pr.getIdRol().getId_rol().equals(3L));
+
+        if (tieneRol) {
+            throw new RuntimeException("Esta persona ya es un Admin.");
+        }
+
+        // 4. Guardar la nueva relación PersonaRol
+        PersonaRol personaRol = new PersonaRol();
+        personaRol.setIdPersona(persona);
+        personaRol.setIdRol(rolAdmin);
+        personaRolServicio.guardar(personaRol);
+        
+       
+        persona.getPersonaRolList().add(personaRol);
+
+        return persona;
     }
 
 }

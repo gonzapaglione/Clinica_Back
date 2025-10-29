@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.controllers;
 
+import com.clinica.clinica_coc.DTO.AsignarPacienteRequest;
 import com.clinica.clinica_coc.DTO.BajaResponse;
 import com.clinica.clinica_coc.DTO.PacienteRequest;
 import com.clinica.clinica_coc.DTO.PacienteResponse;
@@ -12,6 +13,8 @@ import com.clinica.clinica_coc.services.PacienteServicio;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Persona;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize; 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,7 +52,7 @@ public class PacienteController {
 
     // GET: listar por id
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_PACIENTES', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD')")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_PACIENTES', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD', 'PERM_VER_MI_PERFIL_PACIENTE')")
     public ResponseEntity<PacienteResponse> listarPacientePorId(@PathVariable Long id) {
         Paciente paciente = pacienteServicio.buscarPacientePorId(id);
 
@@ -63,7 +66,7 @@ public class PacienteController {
 
     // GET: Ver perfil de paciente (solo el propio paciente)
     @GetMapping("/persona/{idPersona}")
-    @PreAuthorize("hasAuthority('PERM_VER_MI_PERFIL_PACIENTE')")
+    @PreAuthorize("hasAnyAuthority('PERM_VER_MI_PERFIL_PACIENTE', 'PERM_EDITAR_PERFIL_PACIENTE')")
     public ResponseEntity<PacienteResponse> listarPacientePorIdPersona(@PathVariable Long idPersona) {
         Paciente paciente = pacienteServicio.buscarPacientePorIdPersona(idPersona);
 
@@ -92,7 +95,7 @@ public class PacienteController {
 
     // PUT: editar paciente
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PACIENTES')") 
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_PACIENTES', 'PERM_EDITAR_PERFIL_PACIENTE')") 
     public ResponseEntity<PacienteResponse> editarPaciente(
             @PathVariable Long id,
             @RequestBody PacienteRequest request) {
@@ -153,5 +156,21 @@ public class PacienteController {
                 persona.getDomicilio(),
                 persona.getTelefono(),
                 persona.getIsActive());
+    }
+
+    @PostMapping("/asignar")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PACIENTES')") 
+    public ResponseEntity<?> asignarRolPaciente(@RequestBody AsignarPacienteRequest request) {
+        try {
+            Paciente nuevoPaciente = pacienteServicio.asignarRolPaciente(
+                    request.getIdPersona(),
+                    request.getCoberturasIds());
+
+            PacienteResponse dto = convertirAResponse(nuevoPaciente); 
+            return ResponseEntity.status(201).body(dto);
+        
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

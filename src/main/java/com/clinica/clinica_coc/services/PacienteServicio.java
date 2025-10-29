@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PacienteServicio implements IPacienteServicio {
@@ -188,6 +189,59 @@ public class PacienteServicio implements IPacienteServicio {
     public Paciente crearPacienteConPersonaYRol(PersonaRequest personaRequest, List<Long> coberturasIds) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'crearPacienteConPersonaYRol'");
+    }
+
+    @Transactional
+    public Paciente asignarRolPaciente(Long idPersona, List<Long> coberturasIds) {
+        // 1. Buscar la persona
+        Persona persona = personaServicio.buscarPersonaPorId(idPersona);
+        if (persona == null) {
+            throw new RuntimeException("Persona no encontrada con id: " + idPersona);
+        }
+
+        // 2. Verifica si ya es paciente
+        Optional<Paciente> yaExiste = pacienteRepositorio.findByPersonaId(idPersona);
+        if (yaExiste.isPresent()) {
+            throw new RuntimeException("Esta persona ya es un paciente.");
+        }
+
+        // 3. Asignar el Rol de Paciente (ID 1L)
+        Rol rolPaciente = rolRepositorio.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Rol paciente no encontrado"));
+
+        // 4. Verificar si ya tiene el rol antes de añadirlo
+        boolean tieneRol = persona.getPersonaRolList().stream()
+                .anyMatch(pr -> pr.getIdRol().getId_rol().equals(1L));
+
+        if (!tieneRol) {
+            PersonaRol personaRol = new PersonaRol();
+            personaRol.setIdPersona(persona);
+            personaRol.setIdRol(rolPaciente);
+            personaRolServicio.guardar(personaRol);
+        }
+
+        // 5. Crear la entidad Paciente
+        Paciente paciente = new Paciente();
+        paciente.setPersona(persona);
+        paciente.setEstado_paciente("Activo");
+        // No guardamos todavía, primero asignamos coberturas
+
+        // 6. Lógica de Coberturas (con default 'Particular')
+        List<Long> finalCoberturasIds = new ArrayList<>(coberturasIds);
+
+        if (finalCoberturasIds.isEmpty()) {
+            // Busca la cobertura "Particular"
+            CoberturaSocial particular = coberturaSocialRepositorio. findByNombreNativoConParam("Particular") // Asumo que tienes este método en el repo
+                .orElseThrow(() -> new RuntimeException("No se encontró la cobertura 'Particular' por defecto"));
+            finalCoberturasIds.add(particular.getId_cob_social());
+        }
+
+        // 7. Asignar coberturas (Estilo @ManyToMany, consistente con editarPaciente)
+        List<CoberturaSocial> coberturas = coberturaSocialRepositorio.findAllById(finalCoberturasIds);
+        paciente.setCoberturas(coberturas); // (Ver línea 175)
+
+        // 8. Guardar el paciente nuevo con sus coberturas
+        return pacienteRepositorio.save(paciente);
     }
 
 }

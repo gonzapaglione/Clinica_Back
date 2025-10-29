@@ -50,7 +50,7 @@ public class OdontologoController {
     }
 
     @GetMapping("/activos")
-    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_ODONTOLOGOS', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD')")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_ODONTOLOGOS', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_GESTIONAR_TURNOS_OD', 'PERM_RESERVAR_TURNO')")
     public ResponseEntity<List<OdontologoResponse>> listarOdontologosActivos() {
         List<Odontologo> odontologos = odontologoServicio.listarOdontologosActivos("Activo");
 

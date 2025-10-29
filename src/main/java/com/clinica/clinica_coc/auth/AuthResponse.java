@@ -17,5 +17,7 @@ public class AuthResponse {
     private Long idUsuario;
     private String email;
     private List<String> permisos; 
+    List<String> roles;
+    String nombre;
 
 }

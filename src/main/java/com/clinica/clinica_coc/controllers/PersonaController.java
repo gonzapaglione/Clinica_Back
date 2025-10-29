@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.controllers;
 
+import com.clinica.clinica_coc.DTO.AsignarAdminRequest;
 import com.clinica.clinica_coc.DTO.CambioPasswordDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,4 +238,17 @@ public ResponseEntity<?> cambiarPassword(@RequestBody CambioPasswordDTO dto) {
         return new ResponseEntity<>("La contraseña actual es incorrecta", HttpStatus.UNAUTHORIZED);
     }
 }
+
+@PostMapping("/asignar-admin")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PERSONAS')")
+    public ResponseEntity<?> asignarRolAdmin(@RequestBody AsignarAdminRequest request) {
+        try {
+            Persona personaActualizada = personaServicio.asignarRolAdmin(request.getIdPersona());
+            PersonaDTO dto = convertirADTO(personaActualizada); 
+            return ResponseEntity.status(201).body(dto);
+        
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

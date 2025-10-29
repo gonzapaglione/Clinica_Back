@@ -53,6 +53,7 @@ public class AuthService {
         
         //  Preparar el Set de permisos
         Set<String> permisos = new HashSet<>();
+        Set<String> roles = new HashSet<>();
 
         //  Obtener los roles "entidad" (Paciente, Odontologo)
         Paciente paciente = pacienteRepositorio.findByPersonaId(persona.getId_persona()).orElse(null);
@@ -60,12 +61,14 @@ public class AuthService {
 
         //  Lógica para Paciente (basada en ESTADO)
         if (paciente != null) {
+            roles.add("PACIENTE");
             // Permisos que tiene sin importar el estado (siempre que sea paciente)
             permisos.add("PERM_VER_MI_PERFIL_PACIENTE");
             permisos.add("PERM_VER_INICIO");
             if (paciente.getEstado_paciente() != null && paciente.getEstado_paciente().equalsIgnoreCase("Activo")) {
                 permisos.add("PERM_RESERVAR_TURNO");
                 permisos.add("PERM_VER_MIS_TURNOS");
+                permisos.add("PERM_EDITAR_PERFIL_PACIENTE");
             } else if (paciente.getEstado_paciente() != null && paciente.getEstado_paciente().equalsIgnoreCase("Inactivo")) {
                 permisos.add("PERM_VER_MIS_TURNOS"); // Paciente inactivo SÍ puede ver sus turnos/historia
             }
@@ -73,6 +76,7 @@ public class AuthService {
 
         //  Lógica para Odontólogo (basada en ESTADO)
         if (odontologo != null) {
+            roles.add("ODONTOLOGO");
             if (odontologo.getEstado_odont() != null && odontologo.getEstado_odont().equalsIgnoreCase("Activo")) {
                 permisos.add("PERM_VER_MI_PERFIL_OD");
                 permisos.add("PERM_VER_INICIO_ODONT");
@@ -89,16 +93,18 @@ public class AuthService {
                 .anyMatch(a -> a.getAuthority().equals("Admin"));
         
         if (isAdmin) {
-  permisos.add("PERM_GESTIONAR_PACIENTES");
-  permisos.add("PERM_VER_AGENDA_EQUIPO_ADMIN");
-  permisos.add("PERM_GESTIONAR_ODONTOLOGOS");
-  permisos.add("PERM_VER_INICIO_ADMIN");
-  permisos.add("PERM_GESTIONAR_PERSONAS");
-   permisos.add("PERM_GESTIONAR_ESPECIALIDADES");
-  permisos.add("PERM_GESTIONAR_HORARIOS_ADMIN");
-  permisos.add("PERM_GESTIONAR_TURNOS_ADMIN");
-  permisos.add("PERM_GESTIONAR_HISTORIAS_CLINICAS_ADMIN");
-  permisos.add("PERM_VER_MI_PERFIL_ADMIN");
+            roles.add("ADMIN");
+            permisos.add("PERM_GESTIONAR_PACIENTES");
+            permisos.add("PERM_VER_AGENDA_EQUIPO_ADMIN");
+            permisos.add("PERM_GESTIONAR_ODONTOLOGOS");
+            permisos.add("PERM_VER_INICIO_ADMIN");
+            permisos.add("PERM_GESTIONAR_PERSONAS");
+            permisos.add("PERM_GESTIONAR_ESPECIALIDADES");
+            permisos.add("PERM_GESTIONAR_HORARIOS_ADMIN");
+            permisos.add("PERM_GESTIONAR_TURNOS_ADMIN");
+            permisos.add("PERM_GESTIONAR_HISTORIAS_CLINICAS_ADMIN");
+            permisos.add("PERM_VER_MI_PERFIL_ADMIN");
+            permisos.add("PERM_EDITAR_PERFIL_PACIENTE");
 }
 
         //  Permisos generales para CUALQUIER usuario logueado
@@ -109,6 +115,8 @@ public class AuthService {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("permisos", new ArrayList<>(permisos)); 
         extraClaims.put("idUsuario", persona.getId_persona()); 
+        extraClaims.put("roles", new ArrayList<>(roles)); 
+        extraClaims.put("nombre", persona.getNombre() + " " + persona.getApellido());
 
         //  Genera el token USANDO los claims
         String token = jwtService.getToken(extraClaims, userDetails);
@@ -119,6 +127,8 @@ public class AuthService {
             .idUsuario(persona.getId_persona())
             .email(persona.getEmail())
             .permisos(new ArrayList<>(permisos)) 
+            .roles(new ArrayList<>(roles)) 
+            .nombre(persona.getNombre() + " " + persona.getApellido()) 
             .build();
     }
 
