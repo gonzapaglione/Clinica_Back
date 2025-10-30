@@ -18,10 +18,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id_paciente")
-
 @Entity
 @Table(name = "paciente")
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -1,28 +1,37 @@
 package com.clinica.clinica_coc.services;
 
 import com.clinica.clinica_coc.DTO.PacienteRequest;
+import com.clinica.clinica_coc.DTO.PacienteResponse;
 import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.models.CoberturaSocial;
+import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.models.PersonaRol;
 import com.clinica.clinica_coc.models.Rol;
 import com.clinica.clinica_coc.repositories.CoberturaSocialRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
+import com.clinica.clinica_coc.repositories.PersonaRepositorio;
 import com.clinica.clinica_coc.repositories.RolRepositorio;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PacienteServicio implements IPacienteServicio {
 
     @Autowired
     private PacienteRepositorio pacienteRepositorio;
+
+    @Autowired
+    private PersonaRepositorio personaRepositorio;
 
     @Autowired
     private com.clinica.clinica_coc.repositories.PersonaRolRepositorio personaRolRepositorio;
@@ -44,6 +53,9 @@ public class PacienteServicio implements IPacienteServicio {
 
     @Autowired
     private RolRepositorio rolRepositorio; 
+
+    @Autowired
+    private OdontologoServicio odontologoServicio;
 
     @Override
     public List<Paciente> listarPacientes() {
@@ -242,6 +254,26 @@ public class PacienteServicio implements IPacienteServicio {
 
         // 8. Guardar el paciente nuevo con sus coberturas
         return pacienteRepositorio.save(paciente);
+    }
+
+    public List<Paciente> listarPacientesPorOdontologoLogueado(Authentication authentication) {
+        
+        // 1. Obtener el email de la persona logueada
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername(); 
+
+        Persona persona = personaRepositorio.findByEmail(username) 
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada para el usuario: " + username));
+        
+        Long idPersonaLogueada = persona.getId_persona();
+
+        // 3. Buscar el ID de Odontólogo
+        Odontologo odontologo = odontologoServicio.buscarOdontologoPorIdPersona(idPersonaLogueada);
+        
+        // 4. Llamar al nuevo método del repositorio
+        List<Paciente> pacientes = pacienteRepositorio.findPacientesConTurnosPorOdontologo(odontologo.getId_odontologo());
+
+        return pacientes;
     }
 
 }

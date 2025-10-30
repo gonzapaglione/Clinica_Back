@@ -65,6 +65,8 @@ public class OdontologoServicio implements IOdontologoServicio {
         return odontologoRepositorio.findById(id).orElse(null);
     }
 
+
+
     @Override
     public Odontologo guardarOdontologo(Odontologo odontologo) {
         if (odontologo.getPersona() == null || odontologo.getPersona().getId_persona() == null) {

@@ -15,9 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.clinica.clinica_coc.DTO.OdontologoResponse;
 import com.clinica.clinica_coc.DTO.OdontologoResumidoDTO;
 import com.clinica.clinica_coc.DTO.PacienteResumidoDTO;
 import com.clinica.clinica_coc.DTO.TurnoRequest;
@@ -451,5 +455,43 @@ public class TurnoServicio {
 
         Turno turnoActualizado = turnoRepositorio.save(turno);
         return mapTurnoToResponse(turnoActualizado);
+    }
+
+    public List<TurnoResponse> listarHistoriaParaOdontologo(Long idPaciente, Authentication authentication) {
+        // 1. Obtener el ID del Odontólogo logueado
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String EmailPersonaLogueada = userDetails.getUsername();
+        Odontologo odontologo = odontologoRepositorio.findByEmail(EmailPersonaLogueada);
+               
+        Long idOdontologoLogueado = odontologo.getId_odontologo();
+
+        // 2. Obtener TODOS los turnos del paciente
+        List<Turno> todosLosTurnos = turnoRepositorio.findByPacienteId(idPaciente);
+
+        // 3. Procesar la lista
+        return todosLosTurnos.stream()
+            .filter(turno -> {
+                // Si el turno es "PROXIMO", solo incluirlo si pertenece al odontólogo logueado
+                if (turno.getEstadoTurno().equals("PROXIMO")) {
+                    return turno.getOdontologo().getId_odontologo().equals(idOdontologoLogueado);
+                }
+                return true;
+            })
+            .map(turno -> {
+                TurnoResponse dto = mapTurnoToResponse(turno);
+                
+                // Si el turno NO es del odontólogo logueado
+                if (!turno.getOdontologo().getId_odontologo().equals(idOdontologoLogueado)) {
+                    // Y NO es un turno próximo (doble chequeo por si acaso)
+                    if (turno.getEstadoTurno() != "PROXIMO") {
+                        OdontologoResumidoDTO odAnonimo = new OdontologoResumidoDTO();
+                        odAnonimo.setNombre("Otro colega");
+                        
+                        dto.setOdontologo(odAnonimo);
+                    }
+                }
+                return dto;
+            })
+            .collect(Collectors.toList());
     }
 }

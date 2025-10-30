@@ -8,6 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -127,7 +128,7 @@ public class TurnoController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN', 'PERM_VER_MIS_TURNOS')")
     public ResponseEntity<TurnoResponse> actualizarParcialmenteTurno(
             @PathVariable Long id, 
             @RequestBody Map<String, Object> campos) {
@@ -141,5 +142,18 @@ public class TurnoController {
     public ResponseEntity<Void> eliminarTurno(@PathVariable Long id) {
         turnoServicio.eliminarTurno(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/odontologo/historia-paciente/{idPaciente}")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_TURNOS_OD')")
+    public ResponseEntity<List<TurnoResponse>> getHistoriaParaOdontologo(
+            @PathVariable Long idPaciente,
+            Authentication authentication
+    ) {
+        List<TurnoResponse> turnos = turnoServicio.listarHistoriaParaOdontologo(idPaciente, authentication);
+        if (turnos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(turnos);
     }
 }

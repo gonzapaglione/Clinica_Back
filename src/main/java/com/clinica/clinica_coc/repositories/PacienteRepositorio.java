@@ -1,5 +1,6 @@
 package com.clinica.clinica_coc.repositories;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,7 @@ import com.clinica.clinica_coc.models.Paciente;
 public interface PacienteRepositorio extends JpaRepository<Paciente, Long> {
 @Query("SELECT p FROM Paciente p WHERE p.persona.id_persona = :idPersona")
     Optional<Paciente> findByPersonaId(@Param("idPersona") Long idPersona);
+
+  @Query("SELECT DISTINCT t.paciente FROM Turno t WHERE t.odontologo.id = :idOdontologo")
+    List<Paciente> findPacientesConTurnosPorOdontologo(@Param("idOdontologo") Long idOdontologo);
 }

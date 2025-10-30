@@ -16,7 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; 
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -172,5 +173,22 @@ public class PacienteController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/mis-pacientes")
+    @PreAuthorize("hasAuthority('PERM_GESTIONAR_TURNOS_OD')")
+    public ResponseEntity<List<PacienteResponse>> getMisPacientes(Authentication authentication) { // <-- 1. Cambia el tipo de retorno
+
+        List<Paciente> pacientes = pacienteServicio.listarPacientesPorOdontologoLogueado(authentication);
+        
+        if (pacientes == null || pacientes.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+   
+        List<PacienteResponse> response = pacientes.stream()
+                .map(this::convertirAResponse)
+                .toList();
+
+        return ResponseEntity.ok(response); 
     }
 }

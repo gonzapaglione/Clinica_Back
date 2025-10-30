@@ -17,4 +17,7 @@ public interface OdontologoRepositorio extends JpaRepository<Odontologo, Long> {
 
    @Query("SELECT o FROM Odontologo o WHERE o.estado_odont = :estado")
     List<Odontologo> buscarTodosPorEstado(@Param("estado") String estado);
+
+    @Query("SELECT o FROM Odontologo o WHERE o.persona.email = :email" )
+    Odontologo findByEmail(@Param("email") String email);
 }
