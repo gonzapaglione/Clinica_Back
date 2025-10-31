@@ -116,7 +116,7 @@ public class DashboardServicio {
             return "No hay pacientes registrados.";
         }
 
-        return pacienteDestacado.getPersona().getNombre();
+        return pacienteDestacado.getPersona().getNombre().concat(" "+ pacienteDestacado.getPersona().getApellido());
     }
 
     @Transactional(readOnly = true)

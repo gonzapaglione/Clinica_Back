@@ -13,7 +13,6 @@ public class OdontologoResumidoDTO {
     private Long id_odontologo;
     private String nombre;
     private String apellido;
-    private String matricula; // Ejemplo de otro dato útil
 
     // Método de conveniencia
     public String getNombreCompleto() {
