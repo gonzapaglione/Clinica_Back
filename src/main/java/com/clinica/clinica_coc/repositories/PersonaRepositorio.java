@@ -16,4 +16,7 @@ public interface PersonaRepositorio extends JpaRepository<Persona, Long> {
     // Cargar persona junto con sus roles para evitar LazyInitializationException
     @Query("select p from Persona p left join fetch p.personaRolList pr left join fetch pr.idRol where p.email = :email")
     Optional<Persona> findByEmailWithRoles(@Param("email") String email);
+
+   Optional<Persona> existsByEmail(String email);
+   Optional<Persona> findByDni(Long dni);
 }

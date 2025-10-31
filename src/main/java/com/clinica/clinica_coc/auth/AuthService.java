@@ -1,11 +1,14 @@
 package com.clinica.clinica_coc.auth;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.clinica.clinica_coc.models.Persona;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Odontologo;
@@ -133,8 +136,17 @@ public class AuthService {
             .build();
     }
 
-    @Transactional
+  @Transactional
     public AuthResponse register(RegisterRequest request) {
+
+        // --- VALIDACIÓN DE DUPLICADOS ---
+      if (personaRepositorio.findByEmail(request.getEmail()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo electrónico ya está en uso.");
+        }
+        if (personaRepositorio.findByDni(request.getDni()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El DNI ya está registrado.");
+        }
+       
         // 1) Crear y guardar Persona
         Persona persona = new Persona();
         persona.setNombre(request.getNombre());

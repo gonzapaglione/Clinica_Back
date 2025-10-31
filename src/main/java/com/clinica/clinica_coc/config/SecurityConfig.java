@@ -35,7 +35,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authRequest -> authRequest
 
                         // 1. Rutas Públicas
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/").permitAll()
+                        .requestMatchers("/auth/login", "/auth/register").permitAll()
                         .requestMatchers("/api/coberturas/activas").permitAll()
                         .requestMatchers("/api/especialidades").permitAll()
 

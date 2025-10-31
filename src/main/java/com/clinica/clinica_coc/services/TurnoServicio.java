@@ -3,6 +3,7 @@ package com.clinica.clinica_coc.services;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,8 +21,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.clinica.clinica_coc.DTO.OdontologoResponse;
 import com.clinica.clinica_coc.DTO.OdontologoResumidoDTO;
 import com.clinica.clinica_coc.DTO.PacienteResumidoDTO;
 import com.clinica.clinica_coc.DTO.TurnoRequest;
@@ -138,6 +137,17 @@ public class TurnoServicio {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fecha inválido. Usar yyyy-MM-dd");
         }
+       ZoneId zonaClinica = ZoneId.of("America/Argentina/Buenos_Aires");
+
+        // 2. Obtenemos la fecha y hora actuales para argentina (sino se adelanta 3 horas y no funciona el filtro)
+        LocalDate hoy = LocalDate.now(zonaClinica);
+        LocalTime ahora = LocalTime.now(zonaClinica);
+
+      if (fecha.isBefore(hoy)) {
+            return List.of(); 
+        }
+
+        boolean esHoy = fecha.isEqual(hoy);
 
         if (!odontologoRepositorio.existsById(idOdontologo)) {
             throw new ResourceNotFoundException("Odontólogo no encontrado con id: " + idOdontologo);
@@ -172,6 +182,17 @@ public class TurnoServicio {
 
             LocalTime inicioSlot = horario.getHoraInicio();
             LocalTime ultimoInicio = horario.getHoraFin().minusMinutes(duracion);
+
+            if (esHoy && ahora.isAfter(inicioSlot)) {
+
+                LocalTime primerSlotValido = inicioSlot; 
+                
+                while (primerSlotValido.isBefore(ahora)) {
+                    primerSlotValido = primerSlotValido.plusMinutes(duracion);
+                }
+
+                inicioSlot = primerSlotValido; 
+            }
 
             while (!inicioSlot.isAfter(ultimoInicio)) {
                 if (!horariosReservados.contains(inicioSlot)) {

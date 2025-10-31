@@ -1,7 +1,6 @@
 package com.clinica.clinica_coc.services;
 
 import com.clinica.clinica_coc.DTO.PacienteRequest;
-import com.clinica.clinica_coc.DTO.PacienteResponse;
 import com.clinica.clinica_coc.DTO.PersonaRequest;
 import com.clinica.clinica_coc.models.CoberturaSocial;
 import com.clinica.clinica_coc.models.Odontologo;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class PacienteServicio implements IPacienteServicio {
