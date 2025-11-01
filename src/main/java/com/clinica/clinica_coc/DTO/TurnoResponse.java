@@ -16,7 +16,7 @@ public class TurnoResponse {
     private Long id_turno;
     private PacienteResumidoDTO paciente;
     private OdontologoResumidoDTO odontologo;
-
+    private CoberturaSocialDTO cobertura;
     private String motivoConsulta;
     private String estadoTurno;
     private LocalDate fecha;      

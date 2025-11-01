@@ -40,6 +40,10 @@ public class Turno {
     @JoinColumn(name = "id_odontologo", nullable = false)
     private Odontologo odontologo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_cob_social", nullable = true) 
+    private CoberturaSocial coberturaSocial;
+
     @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
 

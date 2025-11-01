@@ -21,16 +21,20 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.clinica.clinica_coc.DTO.CoberturaSocialDTO;
 import com.clinica.clinica_coc.DTO.OdontologoResumidoDTO;
 import com.clinica.clinica_coc.DTO.PacienteResumidoDTO;
 import com.clinica.clinica_coc.DTO.TurnoRequest;
 import com.clinica.clinica_coc.DTO.TurnoResponse;
 import com.clinica.clinica_coc.exceptions.ResourceNotFoundException;
+import com.clinica.clinica_coc.models.CoberturaSocial;
 import com.clinica.clinica_coc.models.Horario;
 import com.clinica.clinica_coc.models.MotivoConsultaEnum;
 import com.clinica.clinica_coc.models.Odontologo;
 import com.clinica.clinica_coc.models.Paciente;
 import com.clinica.clinica_coc.models.Turno;
+import com.clinica.clinica_coc.repositories.CoberturaSocialRepositorio;
 import com.clinica.clinica_coc.repositories.HorarioRepositorio;
 import com.clinica.clinica_coc.repositories.OdontologoRepositorio;
 import com.clinica.clinica_coc.repositories.PacienteRepositorio;
@@ -53,6 +57,9 @@ public class TurnoServicio {
 
     @Autowired
     private HorarioRepositorio horarioRepositorio;
+
+    @Autowired
+    private CoberturaSocialRepositorio coberturaSocialRepositorio;
 
     @Transactional(readOnly = true)
     public List<TurnoResponse> listarTurnos() {
@@ -255,7 +262,7 @@ public class TurnoServicio {
         }
     }
 
-    @Transactional
+   @Transactional
     public TurnoResponse crearTurno(TurnoRequest request) {
         Paciente paciente = pacienteRepositorio.findById(request.getIdPaciente())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -268,10 +275,25 @@ public class TurnoServicio {
         if (request.getFechaHora() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha y hora del turno es obligatoria");
         }
+        
+        // --- NUEVA LÓGICA DE COBERTURA ---
+        CoberturaSocial cobertura = null;
+        if (request.getIdCobertura() != null) {
+            cobertura = coberturaSocialRepositorio.findById(request.getIdCobertura())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Cobertura no encontrada con id: " + request.getIdCobertura()));
+            
+             boolean pacienteTieneCobertura = paciente.getCoberturas().stream()
+                 .anyMatch(cob -> cob.getId_cob_social().equals(request.getIdCobertura()));
+             if (!pacienteTieneCobertura) {
+                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El paciente no posee esa cobertura");
+             }
+        }
 
         Turno turno = new Turno();
         turno.setPaciente(paciente);
         turno.setOdontologo(odontologo);
+        turno.setCoberturaSocial(cobertura); 
         turno.setFechaHora(request.getFechaHora());
         turno.setEstadoTurno(validarEstado(request.getEstadoTurno()));
         turno.setMotivoConsulta(request.getMotivoConsulta());
@@ -281,7 +303,6 @@ public class TurnoServicio {
         Turno turnoGuardado = turnoRepositorio.save(turno);
         return mapTurnoToResponse(turnoGuardado);
     }
-
     @Transactional
     public TurnoResponse actualizarTurno(Long idTurno, TurnoRequest request) {
         Turno turno = turnoRepositorio.findById(idTurno)
@@ -367,6 +388,7 @@ public class TurnoServicio {
     private TurnoResponse mapTurnoToResponse(Turno turno, List<Horario> horariosDelOdontologo) {
         Paciente paciente = turno.getPaciente();
         Odontologo odontologo = turno.getOdontologo();
+        CoberturaSocial cobertura = turno.getCoberturaSocial();
 
         PacienteResumidoDTO pacienteDTO = null;
         if (paciente != null) {
@@ -384,6 +406,15 @@ public class TurnoServicio {
                     .nombre(odontologo.getPersona() != null ? odontologo.getPersona().getNombre() : "N/A")
                     .apellido(odontologo.getPersona() != null ? odontologo.getPersona().getApellido() : "")
                     .build();
+        }
+
+        CoberturaSocialDTO coberturaDTO = null;
+        if (cobertura != null) {
+            coberturaDTO = new CoberturaSocialDTO(
+                cobertura.getId_cob_social(),
+                cobertura.getNombre_cobertura(),
+                cobertura.getEstado_cobertura()
+            );
         }
 
         LocalDateTime fechaHoraInicio = turno.getFechaHora();
@@ -426,6 +457,7 @@ public class TurnoServicio {
                 .id_turno(turno.getId_turno())
                 .paciente(pacienteDTO)
                 .odontologo(odontologoDTO)
+                .cobertura(coberturaDTO)
                 .motivoConsulta(motivoDescripcion)
                 .estadoTurno(turno.getEstadoTurno())
                 .fecha(fechaHoraInicio.toLocalDate())

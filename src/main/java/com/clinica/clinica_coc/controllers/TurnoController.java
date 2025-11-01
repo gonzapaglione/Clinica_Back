@@ -89,7 +89,7 @@ public class TurnoController {
     }
 
     @GetMapping("/paciente/{idPaciente}")
-    @PreAuthorize("hasAuthority('PERM_VER_MIS_TURNOS')")
+    @PreAuthorize("hasAnyAuthority('PERM_VER_MIS_TURNOS', 'PERM_GESTIONAR_TURNOS_ADMIN')")
     public ResponseEntity<List<TurnoResponse>> listarTurnosPorPaciente(@PathVariable Long idPaciente) {
         List<TurnoResponse> turnos = turnoServicio.listarTurnosPorPaciente(idPaciente);
         if (turnos.isEmpty()) {

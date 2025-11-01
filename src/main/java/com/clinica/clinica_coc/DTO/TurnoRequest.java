@@ -20,4 +20,5 @@ public class TurnoRequest {
     private MotivoConsultaEnum motivoConsulta;
     private String tratamiento;
     private String evolucion;
+    private Long idCobertura;
 }
