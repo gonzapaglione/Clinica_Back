@@ -167,6 +167,22 @@ public class PacienteServicio implements IPacienteServicio {
         if (request.getPersona() != null) {
             personaServicio.editarPersona(persona.getId_persona(), request.getPersona());
         }
+
+         Rol rolPaciente = rolRepositorio.findById(1L)
+            .orElseThrow(() -> new RuntimeException("Rol paciente no encontrado"));
+
+    // 3. Asignar PersonaRol 
+    boolean tieneRol = persona.getPersonaRolList().stream()
+            .anyMatch(pr -> pr.getIdRol().getId_rol().equals(1L));
+
+    if (!tieneRol) {
+        PersonaRol personaRol = new PersonaRol();
+        personaRol.setIdPersona(persona);
+        personaRol.setIdRol(rolPaciente);
+        personaRolServicio.guardar(personaRol);
+        // Es importante refrescar la lista en la entidad Persona si la usas después
+        persona.getPersonaRolList().add(personaRol); 
+    }
         List<Long> coberturasIds = request.getCoberturasIds(); // Obtén los IDs del request
         paciente.setEstado_paciente(request.getEstado_paciente());
 
@@ -202,57 +218,67 @@ public class PacienteServicio implements IPacienteServicio {
     }
 
     @Transactional
-    public Paciente asignarRolPaciente(Long idPersona, List<Long> coberturasIds) {
-        // 1. Buscar la persona
-        Persona persona = personaServicio.buscarPersonaPorId(idPersona);
-        if (persona == null) {
-            throw new RuntimeException("Persona no encontrada con id: " + idPersona);
-        }
+public Paciente asignarRolPaciente(Long idPersona, List<Long> coberturasIds) {
+    // 1. Buscar la Persona
+    Persona persona = personaServicio.buscarPersonaPorId(idPersona);
+    if (persona == null) {
+        throw new RuntimeException("Persona no encontrada con id: " + idPersona);
+    }
 
-        // 2. Verifica si ya es paciente
-        Optional<Paciente> yaExiste = pacienteRepositorio.findByPersonaId(idPersona);
-        if (yaExiste.isPresent()) {
-            throw new RuntimeException("Esta persona ya es un paciente.");
-        }
+    // 2. Buscar el Rol Paciente
+    Rol rolPaciente = rolRepositorio.findById(1L)
+            .orElseThrow(() -> new RuntimeException("Rol paciente no encontrado"));
 
-        // 3. Asignar el Rol de Paciente (ID 1L)
-        Rol rolPaciente = rolRepositorio.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Rol paciente no encontrado"));
+    // 3. Asignar PersonaRol 
+    boolean tieneRol = persona.getPersonaRolList().stream()
+            .anyMatch(pr -> pr.getIdRol().getId_rol().equals(1L));
 
-        // 4. Verificar si ya tiene el rol antes de añadirlo
-        boolean tieneRol = persona.getPersonaRolList().stream()
-                .anyMatch(pr -> pr.getIdRol().getId_rol().equals(1L));
+    if (!tieneRol) {
+        PersonaRol personaRol = new PersonaRol();
+        personaRol.setIdPersona(persona);
+        personaRol.setIdRol(rolPaciente);
+        personaRolServicio.guardar(personaRol);
+        // Es importante refrescar la lista en la entidad Persona si la usas después
+        persona.getPersonaRolList().add(personaRol); 
+    }
 
-        if (!tieneRol) {
-            PersonaRol personaRol = new PersonaRol();
-            personaRol.setIdPersona(persona);
-            personaRol.setIdRol(rolPaciente);
-            personaRolServicio.guardar(personaRol);
-        }
+    // 4. Lógica de Coberturas (con default 'Particular')
+    List<Long> finalCoberturasIds = new ArrayList<>();
+    if (coberturasIds != null) {
+        finalCoberturasIds.addAll(coberturasIds);
+    }
 
-        // 5. Crear la entidad Paciente
-        Paciente paciente = new Paciente();
+    if (finalCoberturasIds.isEmpty()) {
+        CoberturaSocial particular = coberturaSocialRepositorio.findByNombreNativoConParam("Particular")
+                .orElseThrow(() -> new RuntimeException("No se encontró la cobertura 'Particular' por defecto"));
+        finalCoberturasIds.add(particular.getId_cob_social());
+    }
+    
+    // Busca las entidades CoberturaSocial
+    List<CoberturaSocial> coberturas = coberturaSocialRepositorio.findAllById(finalCoberturasIds);
+
+   
+    Optional<Paciente> optPaciente = pacienteRepositorio.findByPersonaId(idPersona);
+
+    Paciente paciente;
+
+    if (optPaciente.isPresent()) {
+        // --- CASO 1: El Paciente YA EXISTE  ---
+        paciente = optPaciente.get();
+        paciente.setEstado_paciente("Activo"); // Lo reactivamos
+        paciente.setCoberturas(coberturas); // Actualizamos sus coberturas
+        
+    } else {
+        // --- CASO 2: El Paciente NO EXISTE ---
+        paciente = new Paciente();
         paciente.setPersona(persona);
         paciente.setEstado_paciente("Activo");
-        // No guardamos todavía, primero asignamos coberturas
-
-        // 6. Lógica de Coberturas (con default 'Particular')
-        List<Long> finalCoberturasIds = new ArrayList<>(coberturasIds);
-
-        if (finalCoberturasIds.isEmpty()) {
-            // Busca la cobertura "Particular"
-            CoberturaSocial particular = coberturaSocialRepositorio. findByNombreNativoConParam("Particular") // Asumo que tienes este método en el repo
-                .orElseThrow(() -> new RuntimeException("No se encontró la cobertura 'Particular' por defecto"));
-            finalCoberturasIds.add(particular.getId_cob_social());
-        }
-
-        // 7. Asignar coberturas (Estilo @ManyToMany, consistente con editarPaciente)
-        List<CoberturaSocial> coberturas = coberturaSocialRepositorio.findAllById(finalCoberturasIds);
-        paciente.setCoberturas(coberturas); // (Ver línea 175)
-
-        // 8. Guardar el paciente nuevo con sus coberturas
-        return pacienteRepositorio.save(paciente);
+        paciente.setCoberturas(coberturas);
     }
+
+    // 6. Guardar la entidad Paciente 
+    return pacienteRepositorio.save(paciente);
+}
 
     public List<Paciente> listarPacientesPorOdontologoLogueado(Authentication authentication) {
         

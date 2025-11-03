@@ -160,7 +160,7 @@ public class PacienteController {
     }
 
     @PostMapping("/asignar")
-    @PreAuthorize("hasAuthority('PERM_GESTIONAR_PACIENTES')") 
+    @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_PACIENTES', 'PERM_GESTIONAR_PERSONAS')") 
     public ResponseEntity<?> asignarRolPaciente(@RequestBody AsignarPacienteRequest request) {
         try {
             Paciente nuevoPaciente = pacienteServicio.asignarRolPaciente(
