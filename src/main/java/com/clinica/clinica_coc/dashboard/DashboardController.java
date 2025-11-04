@@ -67,8 +67,8 @@ public class DashboardController {
 
     @GetMapping("/estadisticas/coberturas")
     @PreAuthorize("hasAnyAuthority('PERM_GESTIONAR_TURNOS_OD', 'PERM_GESTIONAR_TURNOS_ADMIN')")
-    public ResponseEntity<List<TurnosPorObraSocialDTO>> obtenerPacientesPorCobertura() {
-        List<TurnosPorObraSocialDTO> resultado = dashboardServicio.obtenerPacientesPorCobertura();
+    public ResponseEntity<List<TurnosPorObraSocialDTO>> obtenerTurnosPorCobertura() {
+        List<TurnosPorObraSocialDTO> resultado = dashboardServicio.obtenerTurnosPorCobertura();
         if (resultado.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

@@ -36,7 +36,7 @@ public class DashboardServicio {
     @Autowired
     private PersonaRepositorio personaRepositorio;
 
-    // Admin
+    // DASHBOARD De Admin
 
     // Metodo para contar la cantidad de usuarios activos
     @Transactional(readOnly = true)
@@ -116,7 +116,7 @@ public class DashboardServicio {
             return "No hay pacientes registrados.";
         }
 
-        return pacienteDestacado.getPersona().getNombre().concat(" "+ pacienteDestacado.getPersona().getApellido());
+        return pacienteDestacado.getPersona().getNombre().concat(" " + pacienteDestacado.getPersona().getApellido());
     }
 
     @Transactional(readOnly = true)
@@ -147,7 +147,7 @@ public class DashboardServicio {
                 turnosSinAsistir());
     }
 
-    // Odontologo
+    // DASHBOARD De Odontologo
 
     @Transactional(readOnly = true)
     public long contarTurnosAtendidosPorOdontologo(Long idOdontologo) {
@@ -176,11 +176,11 @@ public class DashboardServicio {
     }
 
     @Transactional(readOnly = true)
-    public List<TurnosPorObraSocialDTO> obtenerPacientesPorCobertura() {
-        return dashboardRepositorio.contarPacientesPorCobertura();
+    public List<TurnosPorObraSocialDTO> obtenerTurnosPorCobertura() {
+        return dashboardRepositorio.contarTurnosPorCobertura();
     }
 
-    // Paciente
+    // DASHBOARD De Paciente
 
     // Metodo para contar la cantidad de turnos mios(Siendo paciente)
     @Transactional(readOnly = true)
