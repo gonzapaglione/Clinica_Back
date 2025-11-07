@@ -88,15 +88,15 @@ public interface DashboardRepositorio extends org.springframework.data.repositor
       """)
   List<Object[]> practicaMasSolicitadaPorOdontologo(@Param("idOdontologo") Long idOdontologo);
 
-  @Query("""
+ @Query("""
       SELECT new com.clinica.clinica_coc.dashboard.TurnosPorObraSocialDTO(
         COALESCE(c.nombre_cobertura, 'Sin cobertura'),
-        COUNT(t)
+        COUNT(t) AS totalTurnos
       )
       FROM Turno t
       LEFT JOIN t.coberturaSocial c
       GROUP BY COALESCE(c.nombre_cobertura, 'Sin cobertura')
-      ORDER BY COALESCE(c.nombre_cobertura, 'Sin cobertura')
+      ORDER BY totalTurnos DESC
       """)
   List<TurnosPorObraSocialDTO> contarTurnosPorCobertura();
 }
