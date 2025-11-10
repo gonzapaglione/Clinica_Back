@@ -278,16 +278,18 @@ public class TurnoServicio {
         
        
         CoberturaSocial cobertura = null;
-        if (request.getIdCobertura() != null) {
+        if (request.getIdCobertura() != null) {  
             cobertura = coberturaSocialRepositorio.findById(request.getIdCobertura())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Cobertura no encontrada con id: " + request.getIdCobertura()));
-            
+            if(request.getIdCobertura()==7){
+
+            }else{
              boolean pacienteTieneCobertura = paciente.getCoberturas().stream()
                  .anyMatch(cob -> cob.getId_cob_social().equals(request.getIdCobertura()));
              if (!pacienteTieneCobertura) {
                  throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El paciente no posee esa cobertura");
-             }
+             }}
         }
 
         Turno turno = new Turno();
