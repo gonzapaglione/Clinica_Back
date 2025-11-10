@@ -114,15 +114,20 @@ public class DataLoader implements CommandLineRunner {
         }
 
         private void precargarCoberturas() {
-                if (coberturaRepositorio.count() == 0) {
-                        coberturaRepositorio.saveAll(List.of(
-                                        new CoberturaSocial(null, "OSDE", "Activo", new ArrayList<>()),
-                                        new CoberturaSocial(null, "PAMI", "Activo", new ArrayList<>()),
-                                        new CoberturaSocial(null, "Galeno", "Activo", new ArrayList<>()),
-                                        new CoberturaSocial(null, "SwissMedical", "Activo", new ArrayList<>())));
-                        System.out.println("   - Coberturas precargadas");
-                }
-        }
+    if (coberturaRepositorio.count() == 0) {
+        coberturaRepositorio.saveAll(List.of(
+
+            new CoberturaSocial(null, "OSDE", "Activo", new ArrayList<>()), // ID 1
+            new CoberturaSocial(null, "PAMI", "Activo", new ArrayList<>()), // ID 2
+            new CoberturaSocial(null, "Galeno", "Activo", new ArrayList<>()), // ID 3
+            new CoberturaSocial(null, "SwissMedical", "Activo", new ArrayList<>()), // ID 4
+            new CoberturaSocial(null, "OSPE", "Activo", new ArrayList<>()), // ID 5
+            new CoberturaSocial(null, "IOSEP", "Activo", new ArrayList<>()), // ID 6
+            new CoberturaSocial(null, "Particular", "Activo", new ArrayList<>()) // ID 7
+        ));
+        System.out.println("   - Coberturas precargadas");
+    }
+}
 
         private void precargarPersonasYUsuarios() {
                 if (personaRepositorio.count() > 0) {
