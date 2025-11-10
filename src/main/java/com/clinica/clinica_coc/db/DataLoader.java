@@ -177,19 +177,17 @@ public class DataLoader implements CommandLineRunner {
                                 pami != null ? List.of(pami) : new ArrayList<>());
                 Paciente pac3 = new Paciente(null, personas.paciente3(), "Activo",
                                 osde != null && pami != null ? List.of(osde, pami) : new ArrayList<>());
-                Paciente pacAdmin = new Paciente(null, personas.admin(), "Activo", new ArrayList<>());
 
-                pacienteRepositorio.saveAll(List.of(pac1, pac2, pac3, pacAdmin));
-                return new PacientesIniciales(pac1, pac2, pac3, osde, pami, pacAdmin);
+                pacienteRepositorio.saveAll(List.of(pac1, pac2, pac3));
+                return new PacientesIniciales(pac1, pac2, pac3, osde, pami);
         }
 
         private OdontologosIniciales crearOdontologos(PersonasIniciales personas) {
                 Odontologo od1 = new Odontologo(null, personas.odontologo1(), new ArrayList<>(), "Activo");
                 Odontologo od2 = new Odontologo(null, personas.odontologo2(), new ArrayList<>(), "Activo");
-                Odontologo odAdmin = new Odontologo(null, personas.admin(), new ArrayList<>(), "Activo");
 
-                odontologoRepositorio.saveAll(List.of(od1, od2, odAdmin));
-                return new OdontologosIniciales(od1, od2, odAdmin);
+                odontologoRepositorio.saveAll(List.of(od1, od2));
+                return new OdontologosIniciales(od1, od2);
         }
 
         private void asignarRoles(PersonasIniciales personas) {
@@ -202,25 +200,21 @@ public class DataLoader implements CommandLineRunner {
                                 .findFirst().orElse(null);
 
                 List<PersonaRol> personaRoles = new ArrayList<>();
-                agregarRolSiCorresponde(personas.paciente1(), rolPaciente, personaRoles);
-                agregarRolSiCorresponde(personas.paciente2(), rolPaciente, personaRoles);
-                agregarRolSiCorresponde(personas.paciente3(), rolPaciente, personaRoles);
-                agregarRolSiCorresponde(personas.odontologo1(), rolOdontologo, personaRoles);
-                agregarRolSiCorresponde(personas.odontologo2(), rolOdontologo, personaRoles);
-
-                Persona admin = personas.admin();
-                agregarRolSiCorresponde(admin, rolAdmin, personaRoles);
-                agregarRolSiCorresponde(admin, rolPaciente, personaRoles);
-                agregarRolSiCorresponde(admin, rolOdontologo, personaRoles);
+                if (rolPaciente != null) {
+                        personaRoles.add(construirPersonaRol(personas.paciente1(), rolPaciente));
+                        personaRoles.add(construirPersonaRol(personas.paciente2(), rolPaciente));
+                        personaRoles.add(construirPersonaRol(personas.paciente3(), rolPaciente));
+                }
+                if (rolOdontologo != null) {
+                        personaRoles.add(construirPersonaRol(personas.odontologo1(), rolOdontologo));
+                        personaRoles.add(construirPersonaRol(personas.odontologo2(), rolOdontologo));
+                }
+                if (rolAdmin != null) {
+                        personaRoles.add(construirPersonaRol(personas.admin(), rolAdmin));
+                }
 
                 if (!personaRoles.isEmpty()) {
                         personaRolRepositorio.saveAll(personaRoles);
-                }
-        }
-
-        private void agregarRolSiCorresponde(Persona persona, Rol rol, List<PersonaRol> personaRoles) {
-                if (persona != null && rol != null) {
-                        personaRoles.add(construirPersonaRol(persona, rol));
                 }
         }
 
@@ -334,11 +328,10 @@ public class DataLoader implements CommandLineRunner {
         }
 
         private record PacientesIniciales(Paciente paciente1, Paciente paciente2, Paciente paciente3,
-                        CoberturaSocial osde, CoberturaSocial pami, Paciente pacienteAdmin) {
+                        CoberturaSocial osde, CoberturaSocial pami) {
         }
 
-        private record OdontologosIniciales(Odontologo odontologo1, Odontologo odontologo2,
-                        Odontologo odontologoAdmin) {
+        private record OdontologosIniciales(Odontologo odontologo1, Odontologo odontologo2) {
         }
 
 }
