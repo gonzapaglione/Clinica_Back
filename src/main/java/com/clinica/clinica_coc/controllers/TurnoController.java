@@ -114,7 +114,7 @@ public class TurnoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('PERM_RESERVAR_TURNO')")
+    @PreAuthorize("hasAnyAuthority('PERM_RESERVAR_TURNO', 'PERM_GESTIONAR_TURNOS_OD')")
     public ResponseEntity<TurnoResponse> crearTurno(@RequestBody TurnoRequest request) {
         TurnoResponse turnoCreado = turnoServicio.crearTurno(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(turnoCreado);

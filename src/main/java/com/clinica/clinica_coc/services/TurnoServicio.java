@@ -276,7 +276,7 @@ public class TurnoServicio {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha y hora del turno es obligatoria");
         }
         
-        // --- NUEVA LÓGICA DE COBERTURA ---
+       
         CoberturaSocial cobertura = null;
         if (request.getIdCobertura() != null) {
             cobertura = coberturaSocialRepositorio.findById(request.getIdCobertura())
