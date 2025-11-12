@@ -116,14 +116,14 @@ public class DataLoader implements CommandLineRunner {
         private void precargarCoberturas() {
     if (coberturaRepositorio.count() == 0) {
         coberturaRepositorio.saveAll(List.of(
-
-            new CoberturaSocial(null, "OSDE", "Activo", new ArrayList<>()), // ID 1
-            new CoberturaSocial(null, "PAMI", "Activo", new ArrayList<>()), // ID 2
-            new CoberturaSocial(null, "Galeno", "Activo", new ArrayList<>()), // ID 3
-            new CoberturaSocial(null, "SwissMedical", "Activo", new ArrayList<>()), // ID 4
-            new CoberturaSocial(null, "OSPE", "Activo", new ArrayList<>()), // ID 5
-            new CoberturaSocial(null, "IOSEP", "Activo", new ArrayList<>()), // ID 6
-            new CoberturaSocial(null, "Particular", "Activo", new ArrayList<>()) // ID 7
+            new CoberturaSocial(null, "Particular", "Activo", new ArrayList<>()), //ID 1
+            new CoberturaSocial(null, "OSDE", "Activo", new ArrayList<>()), 
+            new CoberturaSocial(null, "PAMI", "Activo", new ArrayList<>()), 
+            new CoberturaSocial(null, "Galeno", "Activo", new ArrayList<>()), 
+            new CoberturaSocial(null, "SwissMedical", "Activo", new ArrayList<>()), 
+            new CoberturaSocial(null, "OSPE", "Activo", new ArrayList<>()), 
+            new CoberturaSocial(null, "IOSEP", "Activo", new ArrayList<>()) 
+             
         ));
         System.out.println("   - Coberturas precargadas");
     }
@@ -147,10 +147,10 @@ public class DataLoader implements CommandLineRunner {
         }
 
         private PersonasIniciales crearPersonasBasicas() {
-                Persona per1 = new Persona(null, "Gonzalo", "Lopez", 30111222L, "paciente1@gmail.com",
+                Persona per1 = new Persona(null, "Gonzalo", "Lopez Paglione", 30111222L, "paciente1@gmail.com",
                                 passwordEncoder.encode("paciente"), "Av. Siempreviva 123", "111-222", "Activo",
                                 new ArrayList<>());
-                Persona per2 = new Persona(null, "Lourdes", "Guerrieri", 30122333L, "paciente2@gmail.com",
+                Persona per2 = new Persona(null, "Lourdes", "Guerrieri Viaña", 30122333L, "paciente2@gmail.com",
                                 passwordEncoder.encode("paciente"), "Calle 9 456", "111-333", "Activo",
                                 new ArrayList<>());
                 Persona per3 = new Persona(null, "Lautaro", "Mercado", 30133444L, "paciente3@gmail.com",
@@ -259,7 +259,7 @@ public class DataLoader implements CommandLineRunner {
                                 "CANCELADO", MotivoConsultaEnum.OTRO, null, null));
                 turnos.add(new Turno(null, pacientes.paciente1(), odontologos.odontologo2(), null,
                                 momentoActual.plusDays(1).withHour(9).withMinute(0).withSecond(0).withNano(0),
-                                "PENDIENTE", MotivoConsultaEnum.DOLOR_DENTAL, null, null));
+                                "PROXIMO", MotivoConsultaEnum.DOLOR_DENTAL, null, null));
 
                 turnoRepositorio.saveAll(turnos);
         }

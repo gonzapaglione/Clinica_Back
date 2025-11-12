@@ -94,9 +94,7 @@ public class CoberturaSocialServicio implements ICoberturaSocialServicio {
     public CoberturaSocial bajaLogica(Long id) {
         CoberturaSocial cobertura = coberturaRepositorio.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("No se encontró la cobertura con ID: " + id));
-       if ("Particular".equalsIgnoreCase(cobertura.getNombre_cobertura())) {
-        throw new IllegalArgumentException("La cobertura 'Particular' no puede ser dada de baja.");
-    }
+
         cobertura.setEstado_cobertura("Inactivo");
         return coberturaRepositorio.save(cobertura);
     }
