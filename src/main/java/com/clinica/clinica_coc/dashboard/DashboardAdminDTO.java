@@ -16,4 +16,7 @@ public class DashboardAdminDTO {
     private int turnosAtendidos;
     private int turnosCancelados;
     private int turnosSinAsistir;
+    private int porcentajeAtendidos;
+    private int porcentajeCancelados;
+    private int porcentajeSinAsistir;
 }

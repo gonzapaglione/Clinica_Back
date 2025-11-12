@@ -134,17 +134,49 @@ public class DashboardServicio {
         return dashboardRepositorio.contarTurnosPorEstado(ESTADO_SIN_ASISTIR);
     }
 
-    @Transactional(readOnly = true)
+
+   @Transactional(readOnly = true)
     public DashboardAdminDTO obtenerDashboardAdmin() {
+        
+        // 1. Obtenemos los conteos que ya tenías
+        int atendidos = turnosAtendidos();
+        int cancelados = turnosCancelados();
+        int sinAsistir = turnosSinAsistir();
+
+        // 2. Calculamos el total y los porcentajes
+        int totalTurnosBarra = atendidos + cancelados + sinAsistir;
+        int porcAtendidos = 0;
+        int porcCancelados = 0;
+        int porcSinAsistir = 0;
+
+        if (totalTurnosBarra > 0) {
+            // Calculamos los dos primeros
+            porcAtendidos = (int) Math.round(((double) atendidos / totalTurnosBarra) * 100);
+            porcCancelados = (int) Math.round(((double) cancelados / totalTurnosBarra) * 100);
+            
+            // El tercero es 100 menos los otros para que la suma siempre sea 100 (evita errores de redondeo)
+            porcSinAsistir = 100 - porcAtendidos - porcCancelados;
+
+            // Caso especial: si los dos primeros redondean a 0 pero "sinAsistir" no es 0
+            if (atendidos == 0 && cancelados == 0 && sinAsistir > 0) {
+                porcSinAsistir = 100;
+            }
+        }
+        
+        // 3. Devolvemos el DTO con los nuevos campos
         return new DashboardAdminDTO(
                 contarUsuariosActivos(),
                 contarPacientesActivos(),
                 contarOdontologosActivos(),
                 odontologoDestacado(),
                 pacienteDestacado(),
-                turnosAtendidos(),
-                turnosCancelados(),
-                turnosSinAsistir());
+                atendidos, 
+                cancelados, 
+                sinAsistir, 
+                porcAtendidos, 
+                porcCancelados, 
+                porcSinAsistir  
+        );
     }
 
     // DASHBOARD De Odontologo

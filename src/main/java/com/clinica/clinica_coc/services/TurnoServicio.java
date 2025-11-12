@@ -277,19 +277,27 @@ public class TurnoServicio {
         }
         
        
-        CoberturaSocial cobertura = null;
-        if (request.getIdCobertura() != null) {  
-            cobertura = coberturaSocialRepositorio.findById(request.getIdCobertura())
+        final Long ID_COBERTURA_PARTICULAR = 1L;
+        
+        CoberturaSocial cobertura; 
+        if (request.getIdCobertura() == null) {
+            
+            cobertura = coberturaSocialRepositorio.findById(ID_COBERTURA_PARTICULAR)
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            "Cobertura no encontrada con id: " + request.getIdCobertura()));
-            if(request.getIdCobertura()==7){
-
+                            "¡Error de Configuración! Cobertura 'Particular' (ID 1) no encontrada."));
+            // (Como es particular, no validamos si el paciente la tiene)
+        } else {
+            cobertura = coberturaSocialRepositorio.findById(request.getIdCobertura()) //
+                    .orElseThrow(() -> new ResourceNotFoundException( //
+                            "Cobertura no encontrada con id: " + request.getIdCobertura())); //
+            if(request.getIdCobertura()==1){ //
+               
             }else{
-             boolean pacienteTieneCobertura = paciente.getCoberturas().stream()
-                 .anyMatch(cob -> cob.getId_cob_social().equals(request.getIdCobertura()));
-             if (!pacienteTieneCobertura) {
-                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El paciente no posee esa cobertura");
-             }}
+             boolean pacienteTieneCobertura = paciente.getCoberturas().stream() //
+                 .anyMatch(cob -> cob.getId_cob_social().equals(request.getIdCobertura())); //
+             if (!pacienteTieneCobertura) { 
+                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El paciente no posee esa cobertura"); //
+             }} 
         }
 
         Turno turno = new Turno();
