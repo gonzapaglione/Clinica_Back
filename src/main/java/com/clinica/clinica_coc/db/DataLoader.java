@@ -152,10 +152,10 @@ public class DataLoader implements CommandLineRunner {
                 Persona per3 = new Persona(null, "Lautaro", "Mercado", 30133444L, "paciente3@gmail.com",
                                 passwordEncoder.encode("paciente"), "Bv. San Martín 12", "111-444", "Activo",
                                 new ArrayList<>());
-                Persona per4 = new Persona(null, "Dr. Diego", "Ruiz", 40111222L, "odontologo1@gmail.com",
+                Persona per4 = new Persona(null, "Diego", "Ruiz", 40111222L, "odontologo1@gmail.com",
                                 passwordEncoder.encode("odontologo"), "Calle Doc 1", "222-111", "Activo",
                                 new ArrayList<>());
-                Persona per5 = new Persona(null, "Dra. Laura", "Sosa", 40122333L, "odontologo2@gmail.com",
+                Persona per5 = new Persona(null, "Laura", "Sosa", 40122333L, "odontologo2@gmail.com",
                                 passwordEncoder.encode("odontologo"), "Calle Doc 2", "222-333", "Activo",
                                 new ArrayList<>());
                 Persona per6 = new Persona(null, "Admin", "Sistema", 50000000L, "admin@gmail.com",
@@ -163,10 +163,10 @@ public class DataLoader implements CommandLineRunner {
                                 new ArrayList<>());
 
  
-                Persona per7 = new Persona(null, "Dra. Ana", "Gomez", 40133444L, "odontologo3@gmail.com",
+                Persona per7 = new Persona(null, "Ana", "Gomez", 40133444L, "odontologo3@gmail.com",
                                 passwordEncoder.encode("odontologo"), "Calle Doc 3", "222-444", "Activo",
                                 new ArrayList<>());
-                Persona per8 = new Persona(null, "Dr. Carlos", "Vera", 40144555L, "odontologo4@gmail.com",
+                Persona per8 = new Persona(null, "Carlos", "Vera", 40144555L, "odontologo4@gmail.com",
                                 passwordEncoder.encode("odontologo"), "Calle Doc 4", "222-555", "Activo",
                                 new ArrayList<>());
                 Persona per9 = new Persona(null, "María", "Sol", 30144555L, "paciente4@gmail.com",
