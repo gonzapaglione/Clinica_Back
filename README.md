@@ -1,4 +1,3 @@
-```markdown
 # Clinica_Back
 
 Backend para el proyecto final de la materia "Práctica profesional". API REST construida con Spring Boot (Java 21), Maven y MySQL.
@@ -15,7 +14,7 @@ Requisitos
 - IDE recomendado: NetBeans o Visual Studio Code (con extensiones de Java / Spring Boot).
   - NetBeans: recomendado para integración directa con proyectos Maven/Java.
   - VS Code: también válido; instalar Java Extension Pack.
-
+```markdown
 Instalación y ejecución (local)
 Se recomienda mantener ambos proyectos en una carpeta contenedora, por ejemplo:
 
@@ -28,7 +27,6 @@ ClinicaCoc
 ```bash
 git clone https://github.com/gonzapaglione/Clinica_Back.git
 cd Clinica_Back
-```
 
 2) Configurar la conexión a MySQL
 Revisá `src/main/resources/application.properties` (o `application.yml`) y ajustá:
@@ -45,7 +43,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
 # Puerto (opcional)
 server.port=8080
-```
+
 Nota: con `createDatabaseIfNotExist=true` y `spring.jpa.hibernate.ddl-auto=update/create`, no es necesario crear manualmente la base de datos en entornos de desarrollo.
 
 3) Ejecutar el backend desde un IDE
@@ -57,7 +55,7 @@ Nota: con `createDatabaseIfNotExist=true` y `spring.jpa.hibernate.ddl-auto=updat
   - Abrir la carpeta del proyecto.
   - Abrir `ClinicaCocApplication`.
   - Usar el botón Run (▶) sobre la clase `ClinicaCocApplication` o usar la paleta de comandos "Run Java".
-
+```
 Puntos importantes
 - No es necesario crear manualmente la base de datos si `spring.jpa.hibernate.ddl-auto` está configurado en `update` o `create` y la URL incluye `createDatabaseIfNotExist=true`. Aun así, MySQL debe estar en ejecución y las credenciales deben ser correctas.
 - El backend expone endpoints en `/api` (ver controladores con `@RequestMapping`).
@@ -78,6 +76,8 @@ Errores comunes (Backend) — y cómo solucionarlos
   - Importar `pom.xml` y esperar la descarga de dependencias.
   - Si falla la importación, ejecutar `./mvnw clean package` desde terminal para ver errores completos.
 
+```
+
 Quick start recomendado para desarrollo local
 1. Asegurarse que MySQL está corriendo (ver el administrador de servicios / systemctl).
 2. Ajustar `src/main/resources/application.properties` con las credenciales correctas.
@@ -85,5 +85,6 @@ Quick start recomendado para desarrollo local
 4. En otra terminal (La de Visual Studio Code) arrancar el frontend (ver README de Clinica_Front):
 ```bash
 cd ../Clinica_Front
+
 npm run dev
 ```
