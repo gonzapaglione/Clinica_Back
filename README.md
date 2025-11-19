@@ -62,7 +62,7 @@ Nota: con `createDatabaseIfNotExist=true` y `spring.jpa.hibernate.ddl-auto=updat
 - Visual Studio Code:
   - Abrir la carpeta del proyecto.
   - Abrir `ClinicaCocApplication`.
-  - Usar el botón Run (▶) sobre la clase `ClinicaCocApplication` o la paleta de comandos "Run Java".
+  - Usar el botón Run sobre la clase `ClinicaCocApplication`.
 
 4) Proseguir con el frontend (desde Visual Studio Code)
 - Leer la documentación del frontend en el repositorio: https://github.com/gonzapaglione/Clinica_Front
